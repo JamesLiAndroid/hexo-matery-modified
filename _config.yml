@@ -139,7 +139,7 @@ live2d:
   react:
     opacity: 0.7
 
-baidu_url_submit:
+#baidu_url_submit:
   # count: 100
   # host: godweiyang.com
   # token: 
