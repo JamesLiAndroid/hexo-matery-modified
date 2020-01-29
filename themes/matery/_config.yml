@@ -43,7 +43,7 @@ dream:
 # Whether to display the musics.
 # 是否在首页显示音乐.
 music:
-  enable: true
+  enable: false
   showTitle: false
   title: 听听音乐
   fixed: false # 开启吸底模式
@@ -89,17 +89,17 @@ indexbtn:
   enable: true
   name: Github
   icon: fa-github-alt
-  url: https://github.com/godweiyang
+  url: https://github.com/JamesLiAndroid
 
 # The configurations of the second line of home banner
 # icon/button will not show up if you leave the corresponding socialLink empty
 # 首页 banner 中的第二行个人信息配置，留空即不启用
 socialLink:
-  qq: 792321264
-  github: godweiyang
-  weibo: godweiyang
-  email: i@godweiyang.com
-  zhihu: godweiyang
+  qq: 
+  github: JamesLiAndroid
+  weibo: 
+  email: lsy1234567@163.com
+  zhihu: 李天
 
 # Whether to activate the Post TOC, and Configure which title types are supported by TOC support.
 # You can add `toc: false` to the Front-matter of a post to turn off the TOC.
@@ -120,7 +120,7 @@ reward:
   enable: true
   title: 写作不易，客官能否打赏一杯奶茶？
   wechat: /medias/reward/wechat.png
-  alipay: /medias/reward/alipay.jpg
+  alipay: /medias/reward/alipay.png
 
 # Whether to activate the copyright information of the blog and author when copying the post content.
 # minCharNumber: Approve copyright information by copying at least how many characters.
@@ -128,7 +128,7 @@ reward:
 copyright:
   enable: true
   minCharNumber: 120 # 至少复制多少个字符就追加版权信息.
-  description: 本文章著作权归作者所有，任何形式的转载都请注明出处。
+  description: 本文章著作权归作者所有，任何形式的转载都请注明出处。感谢您的支持。
 
 # Whether to activate the mathjax, this is a global configuration, but the post still does not open the mathjax rendering.
 # Considering that the mathjax loading is time consuming,
@@ -165,14 +165,14 @@ text:
 # 在”关于”页面中配置个人信息，包括头像、职业和个人介绍.
 profile:
   avatar: /medias/avatars/avatar.jpg
-  career: 华东师范大学 | 计算机科学与技术 | AntNLP
-  introduction: 我是华东师范大学计算机科学与技术专业2018级硕士研究生。直研进入本校计算机系攻读硕士，研究方向是深度学习与自然语言处理。我们实验室是AntNLP，欢迎大家报考！
+  career: 山大华天 | SRE 
+  introduction: 山大华天Java云平台项目组SRE工程师
 
 # config my projects informations in about page.
 # If you don't want to display this `My Projects` content, you can deactivate or delete this configuration.
 # 在“关于”页面配置"我的项目"信息，如果你不需要这些信息则可以将其设置为不激活或者将其删除.
 myProjects:
-  enable: true
+  enable: false
   data:
     hexo-matery-modified:
       icon: fa-meetup
@@ -196,28 +196,22 @@ myProjects:
 mySkills:
   enable: true
   data:
-    Algorithm:
+    Java:
       background: 'linear-gradient(to right, #FF0066 0%, #FF00CC 100%)'
       percent: 90%
-    C++:
+    Linux:
       background: 'linear-gradient(to right, #9900FF 0%, #CC66FF 100%)'
       percent: 80%
-    Python:
+    Android/iOS:
       background: 'linear-gradient(to right, #2196F3 0%, #42A5F5 100%)'
       percent: 80%
-    Pytorch:
+    DevOps:
       background: 'linear-gradient(to right, #951213 0%, #961117 100%)'
       percent: 75%
-    Dynet:
-      background: 'linear-gradient(to right, #F12F12 0%, #F6464F 100%)'
-      percent: 75%
-    Java:
-      background: 'linear-gradient(to right, #00BCD4 0%, #80DEEA 100%)'
-      percent: 50%
     SQL:
       background: 'linear-gradient(to right, #4CAF50 0%, #81C784 100%)'
       percent: 50%
-    HTML:
+    FrontEnd:
       background: 'linear-gradient(to right, #FFEB3B 0%, #FFF176 100%)'
       percent: 45%
 
@@ -286,7 +280,7 @@ valine:
 # 配置是否在 header 中显示 fork me on github 的图标，默认为true，你可以修改为你的仓库地址.
 githubLink:
   enable: true
-  url: https://github.com/godweiyang
+  url: https://github.com/JamesLiAndroid
   title: Fork Me
 
 # The password verification feature of read post. To use this feature,
@@ -303,14 +297,14 @@ verifyPassword:
 # busuanzi(http://busuanzi.ibruce.info/) website statistics
 # 不蒜子(http://busuanzi.ibruce.info/) 网站统计
 busuanziStatistics:
-  enable: true
+  enable: false
   totalTraffic: true # 总访问量
   totalNumberOfvisitors: true # 总人次
 
 # Add google analytics configuration
 # 添加 Google Analytics 配置
 googleAnalytics:
-  enable: true
+  enable: false
   id: 
 
 # The used front-end library can be replaced with the corresponding CDN address as needed,
