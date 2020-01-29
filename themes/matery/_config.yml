@@ -35,7 +35,7 @@ cover:
 # index page dream text,
 # 配置首页显示"梦想"的语句.
 dream:
-  enable: false
+  enable: true
   showTitle: true
   title: 迭戈·西蒙尼（Diego Simeone）
   text: 人一生都要证明自己，直到死去的那一刻！
