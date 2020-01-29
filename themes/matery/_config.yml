@@ -37,8 +37,8 @@ cover:
 dream:
   enable: false
   showTitle: true
-  title: 神秘嘉宾
-  text: 我搬到谁的隔壁，谁成了我的邻居。鸣谢生命有你参与，笑纳我的邀请。
+  title: 迭戈·西蒙尼（Diego Simeone）
+  text: 人一生都要证明自己，直到死去的那一刻！
 
 # Whether to display the musics.
 # 是否在首页显示音乐.
@@ -99,7 +99,7 @@ socialLink:
   github: JamesLiAndroid
   weibo: 
   email: lsy1234567@163.com
-  zhihu: 李天
+  zhihu: li-tian-90-66
 
 # Whether to activate the Post TOC, and Configure which title types are supported by TOC support.
 # You can add `toc: false` to the Front-matter of a post to turn off the TOC.
