@@ -1,0 +1,1160 @@
+---
+title: Linux日常运维操作
+top: false
+cover: false
+toc: true
+mathjax: true
+date: 2020-01-31 11:17:55
+password:
+summary:
+tags: DevOps, Linux 运维手册
+categories: DevOps
+---
+
+# Linux系统初始化以及部署
+
+## 系统版本
+
+1. 系统版本：CentOS 7.6
+2. 内核版本：3.10.0-957.27.2.el7.x86_64
+3. 虚拟机信息：Vmware Exsi 6.5
+
+## 当前进度
+
+* 未完成消息队列的编写
+* 未完成Redis集群搭建的编写
+* 未完成mongodb集群搭建的编写
+
+## 系统初始化
+
+首先进行镜像的安装，使用CentOS 7.6的镜像进行安装，采用最小化安装的方式（无图形化界面、不联网更新）。安装完成后进行系统初始化之前，确保机器可以配置外网连接，如果需要内网使用，请选择基本系统安装方式（安装方式说明见附录）。
+
+注意：
+
+    1. “#” 代表在root用户下执行命令，“$” 代表在常规用户下执行命令。
+
+    2. 如果处于“$”常规用户下，可以使用sudo命令进行提权操作。
+      
+    3. 所有命令使用man查看帮助，例如 man ls 查看ls命令的使用方式。某些命令还可以使用--help项查看帮助信息，例如git --help，查看git命令的相关使用方式。
+
+    4. 文中所有的服务器ip均为假ip信息，需要根据自己的需要进行更换。
+
+### 0. 网络配置
+
+* 设置公网ip或者是内网可访问的地址
+
+        // 1. 先查看机器的网卡信息
+        # ip addr
+        1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+        ...
+        2: ens192: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+        ...
+
+        // 2. 修改网卡的配置文件
+        # vi /etc/sysconfig/network-scripts/ifcfg-ens192
+        // 按照以下配置修改
+        TYPE=Ethernet
+        PROXY_METHOD=none
+        BROWSER_ONLY=no
+        BOOTPROTO=static                // 配置为静态ip
+        DEFROUTE=yes
+        IPV4_FAILURE_FATAL=no
+        IPV6INIT=yes
+        IPV6_AUTOCONF=yes
+        IPV6_DEFROUTE=yes
+        IPV6_FAILURE_FATAL=no
+        IPV6_ADDR_GEN_MODE=stable-privacy
+        NAME=ens192
+        UUID=1df6ac77-3294-42c8-b2af-fd81ce6bb5fc
+        DEVICE=ens192
+        ONBOOT=yes                      // 配置开机启动
+        IPADDR=10.0.11.156              // 配置ip地址
+        NETMASK=255.255.255.0           // 配置子网掩码
+        GATEWAY=10.0.11.254             // 配置网关
+        DNS=202.102.152.3               // 配置DNS信息
+        ZONE=public
+    
+        // 3. 重启网络服务
+        # systemctl restart network
+
+        // 4. 查看修改结果
+        # ip addr
+        1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+        ...
+        2: ens192: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+        link/ether 00:0c:29:73:f8:de brd ff:ff:ff:ff:ff:ff
+        inet 10.0.11.156/24 brd 10.0.11.255 scope global noprefixroute ens192
+        valid_lft forever preferred_lft forever
+
+        // 此时表示网络设置完成
+
+### 1. 软件源配置
+
+* 更新源
+
+        // 1. 备份一下当前的repo文件
+        # mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bar
+
+        // 2. 下载yum源，目前这里使用163的
+        # wget http://mirrors.163.com/.help/CentOS7-Base-163.repo
+
+        // 3. 执行替换操作
+        # mv CentOS7-Base-163.repo CentOS7-Base.repo
+
+        // 4. 将服务器上的软件包信息 现在本地缓存,以提高 搜索 安装软件的速度
+        # yum makecache
+
+        // 等待更新完成即可进行更新系统操作
+
+
+* 更新系统
+
+        // 使用update命令更新
+        // 总的来说更新（update）和升级（upgrade）是相同的，除了事实上 升级 = 更新 + 更新时进行废弃处理。
+        # yum update && yum upgrade
+
+* 包管理工具常用命令
+
+        // 搜索软件包
+        # yum search 软件包   
+        // 安装软件包
+        # yum install 软件包  
+        // 移除软件包
+        # yum remove 软件包
+        //更新系统
+        # yum update  
+
+* 常用工具安装
+
+        // 1. 安装 Wget
+        # yum install -y wget
+
+        // 2. 安装git
+        # yum install -y git
+
+        // 3. 安装unzip
+        # yum install -y unzip
+
+        // 4. 网络工具箱
+        # yum install -y net-tools 
+
+        // 5. curl工具
+        # yum install -y curl
+
+        // 6. vim编辑器，比vi工具更现代
+        # yum install -y vim 
+
+        // 7. telnet工具
+        # yum install -y telnet 
+
+    注意：“-y”代表同意安装该程序，无需在安装时确定
+
+
+### 2. 用户配置
+
+* 添加用户
+    
+        // 创建用户的命令, -m表示创建home目录信息，centos表示常规使用的用户
+        # useradd -m centos 
+        // 设定密码
+        # passwd centos
+
+        // 创建用户的命令, -m表示创建home目录信息，ftpuser表示常规使用的用户
+        # useradd -m ftpuser 
+        // 设定密码
+        # passwd ftpuser
+
+
+* 用户权限（非测试环境不允许启用root权限）
+
+        // 使用vim修改文件
+        # vim /etc/sudoers
+
+        ##
+        ## The COMMANDS section may have other options added to it.
+        ##
+        ## Allow root to run any commands anywhere
+        root    ALL=(ALL)       ALL
+        #centos  ALL=NOPASSWD:/usr/libexec/openssh/sftp-server
+        centos  ALL=(ALL)       ALL    # 添加该行信息
+
+* **注意**：一定不要在生产环境启用root权限，原则上不允许在线上环境切换到root用户执行命令。
+
+### 3. 时钟同步（可访问外网的情况下启用）
+
+使用ntpdate+crontab来完成时钟同步。
+
+        // 0. 查看时钟是否正确
+        $ date
+
+        // 1. 首先安装ntpdate
+        # yum install -y ntpdate
+
+        // 2. 调用ntpdate命令进行时钟修正，确保该命令可用
+        # ntpdate -u pool.ntp.org
+
+        // 3. 最后，集成定时任务
+        # crontab -e
+        
+        // 类vim编辑页面，输入i添加下面的内容，表示每10分钟执行一次定时任务，同步时钟信息。
+        */10 * * * * /usr/sbin/ntpdate pool.ntp.org > /dev/null 2>&1
+
+        // 点击Esc按钮，退出编辑，输入:wq进行保存。此时定时任务已经设置完成。
+
+        // 4. 重启定时任务服务
+        # systemctl restart crond
+
+        // 5. 查看定时任务执行情况，参考下面命令：
+        tail -f /var/log/cron
+
+参考链接：https://www.cnblogs.com/frankdeng/p/9005691.html
+
+
+### 4. 防火墙设置（默认不允许关闭）
+
+此处的防火墙为CentOS系统默认的防火墙服务firewalld，使用firewall-cmd来进行设置端口的开放和关闭。系统初始使用时，默认只开放21（ftp服务）、22（ssh）、80（http web服务）、443（https）等端口。
+
+        // 1. 首先查看firewalld服务是否已经打开
+        # systemctl status firewalld
+
+        // 2. 查看目前已选的区信息
+        # firewall-cmd --get-default-zone 
+
+        // 一般已启用的区信息为public
+
+        // 3. 查看目前已经开放的端口信息
+        # firewall-cmd --list-all 
+
+        // 或者使用下面的命令
+        
+        # firewall-cmd --zone=public --list-ports
+
+        // 4. 设置要开放的端口，--permanent代表永久生效
+        # firewall-cmd --zone=public --add-port=5000/tcp --permanent
+
+        // 5. 设置要开放的端口段，例如19000-19999
+        # firewall-cmd --zone=public --add-port=4990-4999/tcp --permanent
+
+        // 6. 关闭已经设置的端口
+        # firewall-cmd --zone=public --remove-port=5000/tcp --permanent
+
+        // 7. 重新加载，当设置完端口后，使用该命令生效
+        # firewall-cmd --reload
+        
+        // 8. 重启firewalld服务
+        # systemctl restart firewalld
+
+        // 9. 禁用firewalld服务
+        # systemctl disable firewalld
+
+        // 10. 启用firewalld服务
+        # systemctl start firewalld
+
+### 5. ftp服务设置
+
+        // 使用yum安装vsftpd
+        # yum install -y vsftpd 
+
+        // 启动 FTP 服务
+        # systemctl start vsftpd
+
+        // 对ftp服务进行配置，配置信息位于/etc/vsftpd/目录下
+        # vim /etc/vsftpd/vsftpd.conf
+        
+        // 配置文件中找到下面两行
+        // 禁用匿名用户  12 YES 改为NO
+        anonymous_enable=NO
+
+        // 禁止切换根目录 101 行 删除#
+        chroot_local_user=YES 
+
+        // 更换登录端口
+        listen=NO
+        listen_port=2231
+
+        // :wq保存配置信息
+
+        // 重启服务
+        # systemctl restart vsftpd
+
+        // 防火墙开启2231端口对外访问
+        # firewall-cmd --zone=public --add-port=2231/tcp --permanent
+        # firewall-cmd --reload
+
+        // 添加ftp用户
+        # useradd ftpuser
+
+        // 设置密码，如果需要自己设定请替换引号内的信息
+        # echo "testftp" | passwd ftpuser --stdin
+
+        // 限制ftpuser只能通过ftp服务访问
+        # usermod -s /sbin/nologin ftpuser
+
+        // 为用户分配主目录
+        // /home/ftpuser/ 为主目录, 该目录不可上传文件
+        // /home/ftpuser/pub 文件只能上传到该目录下（目前设定的是，直接传输到/home/ftpuser/目录下）
+
+        
+        // 创建目录结构
+        # mkdir -p /home/ftpuser/pub
+
+        // 设置访问权限
+        # chmod a-w /home/ftpuser && chmod 777 -R /home/ftpuser/pub
+
+        // 设置为用户主目录
+        # usermod -d /home/ftpuser ftpuser
+
+        // 重启下ftp服务
+        # systemctl restart vsftpd
+
+    这样ftp服务就设置完成了，可以使用[WinSCP](https://winscp.net/eng/docs/lang:chs)登录或者使用[FileZilla](https://filezilla-project.org/)登录。
+
+
+### 6. ssh服务设置
+
+        // 首先，确保服务器已安装openssh-server，命令如下：
+
+        // 1. 判断ssh服务已安装
+        # yum list installed | grep openssh-server
+        // 如果有以下输出，说明已经安装相关组件
+        openssh-server.x86_64                7.4p1-21.el7                   @base  
+
+        // 2. 若未安装，首先安装openssh-server
+        # yum install -y openssh-server
+
+        // 3. 找到sshd的配置文件
+        # cd /etc/ssh
+        # vim ./sshd_config
+
+        // 3.1 修改登录端口为15555, 允许任意ip远程登录，如果是内网机器，则不要设置任意ip远程登录
+        Port 15555
+    
+        ListenAddress 0.0.0.0
+        ListenAddress ::
+
+        // 3.2 设置不允许root用户远程登录
+        PermitRootLogin no
+
+        // 3.3 开启使用用户名密码来作为连接验证
+        PasswordAuthentication yes
+
+        // 设置完成后, :wq 退出编辑
+    
+        // 4. 重启ssh服务，重启网络，并设置开机启动sshd，依次执行下面的命令
+        # systemctl restart sshd
+        # systemctl restart network
+        # systemctl enable sshd
+
+        // 5. 防火墙开启访问信息
+        # firewall-cmd --zone=public --add-port=15555/tcp --permanent
+        # firewall-cmd --reload
+    
+    这样ssh服务就设置完毕了，我们在前面已经创建了**centos**用户，因此在客户机上尝试远程连接服务器。以Windows系统为例，使用[Cmder](https://cmder.net/)作为终端工具。打开Cmder终端工具，输入以下信息：
+
+        ssh -p 15555 centos@10.0.11.11
+
+    其中**-p*表示指定端口号，*centos*就是我们在前面设置的用户名，**10.0.11.11*需要替换为你自己的真实ip地址。在出现输入密码的位置，输入用户对应的密码信息，回车即可登录服务器。
+
+
+## 软件安装
+
+前提信息：区分使用原生安装还是docker安装
+
+1. 基础设施
+
+    * JDK安装--OpenJDK、OracleJDK
+
+        首先介绍OracleJDK的安装，生产环境中使用的是OracleJDK，版本为1.8.0_202。预设前提是，已经将OracleJDK的安装包下载完毕了。第一步需要判断服务器上是否安装过jdk，执行下面的命令：
+
+            # yum list installed | grep openjdk
+
+        如果已经安装过jdk，例如镜像内已经含有openjdk，需要先移除已安装的jdk。执行下面的命令：
+
+            # yum remove java-1.8.0-openjdk
+
+        第二步，通过ftp的方式将OracleJDK安装文件传入服务器，可以使用图形化工具，例如[WinSCP](https://winscp.net/eng/index.php)、[FileZilla](https://filezilla-project.org/)，这里使用命令行的形式传输，打开Cmder工具，输入以下命令：
+
+            scp -P 15555 jdk-8u202-linux-x64.tar.gz ftpuser@10.0.11.11:/home/ftpuser
+
+        这样就将OracleJDK的安装包传入到服务器了。第三部开始解压，并创建相关目录。
+
+            // 将安装文件解压
+            $ tar -zxvf jdk-8u202-linux-x64.tar.gz
+            // 创建安装目录
+            $ sudo mkdir /usr/local/java/
+            // 将解压后的文件夹拷贝到安装目录
+            $ sudo cp -r jdk-8u202-linux-x64/ /usr/local/java/
+
+        第四步，开始配置环境变量，用vim打开/etc/profile，进行设置
+
+            $ sudo vim /etc/profile
+
+            // 在文档末尾添加
+            # JAVA env
+            JAVA_HOME=/usr/java/jdk1.8.0_202
+            JRE_HOME=$JAVA_HOME/jre
+            CLASS_PATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib
+            PATH=$PATH:$JAVA_HOME/bin:$JRE_HOME/bin
+            export JAVA_HOME JRE_HOME CLASS_PATH PATH
+
+            // 最后输入:wq保存文档
+
+            // 使环境变量生效
+            $ sudo source /etc/profile
+
+            // 添加软链接
+            $ sudo ln -s /usr/local/java/jdk1.8.0_202/bin/java /usr/bin/java
+        
+        这样OracleJDK就安装完成了，可以执行以下命令进行检查。
+
+            $ java -version
+            $ javac -version
+        
+        如果均能输出java的版本信息，说明安装成功。
+
+        如果是要安装openjdk的话，直接使用下面的命令安装即可：
+
+            $ sudo yum install -y java-1.8.0-openjdk.x86_64
+
+        如果是多版本jdk存在，使用alternatives命令进行管理和切换。[参考下面的链接](https://blog.csdn.net/waplys/article/details/98478247)。
+        
+    
+
+* docker、docker-compose安装
+
+    安装的docker版本为19.0.3，安装的docker-compose版本为1.24.1。依据下面的命令来安装docker：
+
+        // 确定自己服务器的内核版本
+        # uname -r
+
+    确定
+
+        // 更新当前的软件源
+        # yum update
+
+        // 卸载旧版本（如果以前安装过旧版本），并清除之前的docker存档(如果需要的话)
+        # yum remove docker docker-common docker-selinux docker-engine
+        # rm -r /var/lib/docker
+
+        // 安装需要的软件包依赖
+        # yum install -y yum-utils \
+                    device-mapper-persistent-data \
+                    lvm2
+        
+        // 添加repo信息
+        # yum-config-manager \
+                --add-repo \
+                https://download.docker.com/linux/centos/docker-ce.repo
+
+        // 更新软件源缓存
+        # yum makecache fast
+
+        // 安装最新的稳定版本的docker或者安装指定版本的docker，执行一条命令即可
+        # yum install -y docker-ce
+        // 或者执行下面的命令
+        # yum install -y docker-ce-19.0.3.ce
+
+        // 配置docker服务以及设置开机启动
+        # systemctl start docker
+        # systemctl enable docker
+
+        // 拉取hello-world镜像测试docker命令是否可用
+        # docker pull hello-world
+        # docker run hello-world
+    
+    如果能够正常输出hello-world，则说明docker安装成功。
+
+    安装完成后，需要配置当前用户在不需要root权限的情况下可以正常使用docker的各项命令。例如我们添加centos用户到docker可执行的组中。配置命令如下：
+
+        $ sudo groupadd docker
+        $ sudo gpasswd -a centos docker
+        $ sudo systemctl restart docker
+
+    这样docker就全部安装完成了。可以在用户centos环境下，测试
+
+        $ docker run hello-world
+
+    如果可以正常输出hello-world，则说明成功。
+
+    最后，安装docker-compose，确保前面已经安装好docker了！
+
+        $ sudo curl -L https://github.com/docker/compose/releases/download/1.24.1/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+
+        $ sudo chmod +x /usr/local/bin/docker-compose   
+
+        $ sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+2. 数据库
+
+* MySQL安装
+    
+    MySQL版本选择5.7.28。分别演示使用rpm安装和docker安装。安装之前，首先需要检查系统中是否存在MariaDB，并删除MariaDB。
+
+        # yum list installed | grep mariadb
+        mariadb-libs-x86_64                  ........................................
+
+        // 删除MariaDB
+        # yum remove -y mariadb*
+    
+    由于是测试环境，所以先使用docker安装MySQL镜像。
+
+        // 拉取docker镜像
+        $ docker pull mysql:5.7.28
+
+        // 启动docker镜像
+        $ docker run --restart=always --name mysql5.7 -v /data/mysql5.7-data:/var/lib/mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456  -d mysql:5.7.28
+
+    当MySQL的docker镜像启动后，登录的用户名默认为root，密码设定为123456。这样启动后，需要打开3306端口，允许外部连接。执行如下：
+
+        # firewall-cmd --zone=public --add-port=15555/tcp --permanent
+        # firewall-cmd --reload
+
+    这样就可以通过[Navicat](https://www.navicat.com.cn/)等工具访问MySQL数据库了。
+    
+    如果选择使用软件源的方式安装，需要进行以下操作：
+
+        // 下载MySQL的YUM源
+        $ wget https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+
+        // 安装 MySQL 的 YUM 源
+        #  rpm -ivh mysql57-community-release-el7-11.noarch.rpm
+
+        // 检查 MySQL 的 YUM 源是否安装成功
+        # yum repolist enabled | grep "mysql.*-community.*"
+
+        // 如果结果中出现mysql57-community/x86_64的信息，说明安装成功
+
+        // 查看MySQL版本
+        # yum repolist all | grep mysql
+
+        // 安装MySQL
+        # yum install -y mysql57-community-server 
+
+        // 启动MySQL服务
+        # systemctl start mysqld
+
+        // 远程访问 MySQL，需要开放 3306 端口：
+        # firewall-cmd --permanent --zone=public --add-port=3306/tcp
+        # firewall-cmd --permanent --zone=public --add-port=3306/udp
+        # firewall-cmd --reload
+
+    由此MySQL就安装完成了，这时候需要对MySQL进行连接。
+
+        $ mysql -u root -p 
+    
+注意事项:
+
+1. 针对rpm+yum安装，刚安装的 MySQL 是没有密码的，这时如果出现：
+
+    ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)，解决如下：
+
+        // ① 停止 MySQL 服务
+        # systemctl stop mysqld 
+
+        // ② 以不检查权限的方式启动 MySQL
+        # mysqld --user=root --skip-grant-tables &
+
+        // ③ 再次输入 
+        # mysql -u root 或者 mysql
+
+        // ④ 更新密码：
+        // MySQL 5.7 以下版本：
+        mysql> UPDATE mysql.user SET Password=PASSWORD('123456') where USER='root';
+
+        // MySQL 5.7 版本：
+        mysql> UPDATE mysql.user SET authentication_string=PASSWORD('123456') where USER='root';
+
+        // ⑤ 刷新，使之前的修改生效：
+        mysql> flush privileges;
+
+        // ⑥ 退出：
+        mysql> exit;
+
+设置完之后，输入 mysql -u root -p，这时输入刚设置的密码，就可以登进数据库了。
+
+2.  针对rpm+yum安装，需要设置允许远程访问
+
+默认情况下 MySQL 是不允许远程连接的，所以在 Java 项目或者 MySQLWorkbench 等数据库连接工具连接服务器上的 MySQL 服务的时候会报 "Host 'x.x.x.x' is not allowed to connect to this MySQL server"。可以通过下面的设置解决。详细可以参考之前写的一篇文章 XXX is not allowed to connect to this MySQL server。
+
+    // 授权操作, '0'需要改为之前设置的MySQL密码
+    mysql> grant all privileges on *.* to root@"%" identified by '0';
+
+    mysql> flush privileges;
+
+    * MyCat安装以及高可用
+
+    * MongoDB安装
+        
+通过docker的方式来安装MongoDB测试服务器，版本为3.4。操作如下:
+
+    // 拉取docker镜像
+    $ docker pull mongo:3.4
+    // 运行镜像
+    $ docker run --name mongod -p 27017:27017 -d mongo:3.4 --auth
+    // 查看已有的镜像信息
+    $ docker ps -a 
+    // 进入mongoDB设置登录用户信息
+    $ docker exec -it <镜像的md5信息> mongo admin
+    // 在下面的>后填写以下命令创建用户
+    > db.createUser({user:"root",pwd:"root",roles:[{role:'root',db:'admin'}]})
+        
+这时MongoDB就部署完成了。
+
+如果是通过软件源安装，这里配置的是4.2版本的mongodb。步骤如下：
+
+    // 添加软件源
+    $ sudo vim /etc/yum.repos.d/mongodb-org-4.2.repo
+
+    // 文件中输入以下信息
+    [mongodb-org-4.2]
+    name=MongoDB Repository
+    baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/4.2/x86_64/
+    gpgcheck=1
+    enabled=1
+    gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc
+
+    // :wq 保存文件
+    // 更新源信息
+    $  sudo yum update -y
+    // 开始安装mongodb
+    $  sudo yum install -y mongodb-org
+
+    // 针对mongodb进行设置
+    // 1. 进入mongodb的shell操作空间
+    $ mongo
+
+    // 2. 切换数据库
+    > use admin
+
+    // 3. 添加管理员用户
+    > db.createUser({ 
+            user: "admin",  
+            customData：{description:"superuser"},
+            pwd: "admin",  
+            roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]  
+        })  
+
+    // 4. 退出，以管理员身份重新登录
+    > quit()
+    $ mongo -u mongo-admin -p --authenticationDatabase admin
+    // 输入密码
+    // 5. 对需要操作的库进行授权
+    > db.createUser({
+            user:"user001",
+            pwd:"123456",
+            roles:[
+                {role:"readWrite",db:"db001"},
+                {role:"readWrite",db:"db002"},
+                'read'// 对其他数据库有只读权限，对db001、db002是读写权限
+            ]
+        })
+    // 6. 退出
+    > quit()
+
+这样用户权限就授权完毕了，现在需要对mongodb的配置文件进行修改。
+
+    // 修改配置文件
+    $ vim /etc/mongod.conf
+        # mongod.conf
+
+        # for documentation of all options, see:
+        #   http://docs.mongodb.org/manual/reference/configuration-options/
+
+        # where to write logging data.
+        systemLog:
+            destination: file
+            logAppend: true
+            path: /var/log/mongodb/mongod.log
+
+        journal:
+            enabled: true
+        #  engine:
+        #  wiredTiger:
+
+        # how the process runs
+        processManagement:
+            fork: true  # fork and run in background
+            pidFilePath: /var/run/mongodb/mongod.pid  # location of pidfile
+            timeZoneInfo: /usr/share/zoneinfo
+
+        # network interfaces
+        net:
+            port: 27017
+            # 修改为所有ip均可访问
+            bindIp: 0.0.0.0  # Enter 0.0.0.0,:: to bind to all IPv4 and IPv6 addresses or, alternatively, use the net.bindIpAll setting.
+
+        # 添加授权登录的配置信息
+        security:
+            authorization: enabled
+    
+    // :wq 保存退出
+    // 这时重启mongodb服务  
+    $  sudo systemctl restart mongod
+
+这样配置就完成了，随后通过NoSQLBooster for MongoDB工具或者Studio 3T工具进行连接。需要注意的是在javaweb开发时，在配置文件中写入完整的连接字符串，如下：
+
+    data:
+        mongodb:
+            uri: mongodb://mongo_ex:123456@10.0.11.12:27017/icp-cloud-visualmodel  
+
+* MongoDB集群搭建
+
+3. 缓存Redis
+
+* Redis单体安装
+
+Redis版本选择Redis 4.0以上版本，因为4.0以上版本可以支持官方的cluster集群模式构建缓存集群，这里使用4.0.14版本。安装步骤如下：
+
+    // 下载Redis安装包
+    $ wget http://download.redis.io/releases/redis-4.0.14.tar.gz
+    // 解压
+    $ tar -zxvf redis-4.0.14.tar.gz
+    // 进入文件夹准备安装
+    $ cd redis-4.0.14
+    // 安装依赖包
+    $ sudo yum -y install gcc gcc-c++ kernel-devel
+    // 执行编译
+    $ make
+    // 进行安装，确定安装目录到/usr/local/redis
+    $ make PREFIX=/usr/local/redis install
+    // copy配置文件redis.conf到/usr/local/redis目录下
+    $ cp redis.conf /usr/local/redis
+    // 修改Redis的配置文件
+    $ vim /usr/local/redis/redis.conf
+
+        # 修改一下配置
+        # redis以守护进程的方式运行
+        # no表示不以守护进程的方式运行(会占用一个终端)  
+        daemonize yes
+
+        # 客户端闲置多长时间后断开连接，默认为0关闭此功能  
+        timeout 300
+
+        # 设置redis日志级别，默认级别：notice                    
+        loglevel verbose
+
+        # 设置日志文件的输出方式,如果以守护进程的方式运行redis 默认:"" 
+        # 并且日志输出设置为stdout,那么日志信息就输出到/dev/null里面去了 
+        logfile stdout
+
+        # 设置密码授权
+        requirepass <设置密码>
+        
+        # 监听ip，允许外网连接
+            bind 0.0.0.0
+    
+    // 输入:wq保存并退出编辑
+
+    // 配置环境变量
+    # vim /etc/profile
+    
+    // 在文件末尾进行追加
+    export REDIS_HOME=/usr/local/redis
+    export PATH=$PATH:$REDIS_HOME/bin
+
+    // 输入:wq保存并退出编辑
+    // 使环境变量生效
+    # source /etc/profile
+
+    // 需要配置开机启动
+    # cd /etc/init.d
+    # vim redis
+
+        #!/bin/bash
+        #chkconfig: 2345 80 90
+        # Simple Redis init.d script conceived to work on Linux systems
+        # as it does use of the /proc filesystem.
+
+        PATH=/usr/local/bin:/sbin:/usr/bin:/bin
+        REDISPORT=6379
+        EXEC=/usr/local/redis/bin/redis-server
+        REDIS_CLI=/usr/local/redis/bin/redis-cli
+        
+        PIDFILE=/var/run/redis.pid
+        CONF="/usr/local/redis/etc/redis.conf"
+        
+        case "$1" in
+            start)
+                if [ -f $PIDFILE ]
+                then
+                        echo "$PIDFILE exists, process is already running or crashed"
+                else
+                        echo "Starting Redis server..."
+                        $EXEC $CONF
+                fi
+                if [ "$?"="0" ] 
+                then
+                    echo "Redis is running..."
+                fi
+                ;;
+            stop)
+                if [ ! -f $PIDFILE ]
+                then
+                        echo "$PIDFILE does not exist, process is not running"
+                else
+                        PID=$(cat $PIDFILE)
+                        echo "Stopping ..."
+                        $REDIS_CLI -p $REDISPORT SHUTDOWN
+                        while [ -x ${PIDFILE} ]
+                    do
+                            echo "Waiting for Redis to shutdown ..."
+                            sleep 1
+                        done
+                        echo "Redis stopped"
+                fi
+                ;;
+        restart|force-reload)
+                ${0} stop
+                ${0} start
+                ;;
+        *)
+            echo "Usage: /etc/init.d/redis {start|stop|restart|force-reload}" >&2
+                exit 1
+        esac
+
+    // 输入:wq保存并退出编辑
+    // 给脚本增加运行权限
+    # chmod +x /etc/init.d/redis
+    // 查看服务列表
+    # chkconfig --list
+
+    // 添加服务
+    # chkconfig --add redis
+
+    // 配置启动级别
+    # chkconfig --level 2345 redis on
+
+    // 启动测试
+    # systemctl start redis   #或者 /etc/init.d/redis start  
+    # systemctl stop redis   #或者 /etc/init.d/redis stop
+
+    // 添加redis开放端口
+    # firewall-cmd --permanent --zone=public --add-port=6379/tcp
+    # firewall-cmd --permanent --zone=public --add-port=6379/udp
+    # firewall-cmd --reload
+
+
+* Redis集群--哨兵模式搭建
+
+（进程内缓存使用--caffine--框架进行开发，在编码时使用）
+
+4. 消息队列
+
+    * RocketMQ搭建
+
+5. 依赖管理，仓库和镜像
+
+请参考{% post_link 持续集成实践大纲 %}
+
+6. CI/CD工具链
+
+请参考{% post_link 持续集成实践大纲 %}
+
+7. Zookeeper
+
+* Zookeeper安装和集群搭建
+
+- 使用安装文件进行发布
+
+- 所在目录：/home/centos/zookeeper-3.4.14
+
+- 发布地址：
+    10.0.11.11:21810
+    10.0.11.12:21810
+    10.0.11.13:21810
+
+- 相关命令：
+
+1. 配置环境变量
+
+* 在每一台部署了zookeeper的服务器上
+
+        #修改环境变量文件
+        vi /etc/profile
+
+        #增加以下内容
+        export ZOOKEEPER_HOME=/usr/zookeeper/zookeeper-3.4.11
+        export PATH=$ZOOKEEPER_HOME/bin:$PATH
+
+        #使环境变量生效
+        source /etc/profile
+
+        #查看配置结果
+        echo $ZOOKEEPER_HOME
+
+
+2. 配置节点标识
+
+
+        #针对zk01，也就是11服务器：
+
+        echo "1" > /zookeeper/data/myid
+        
+        #针对zk02，也就是12服务器：
+
+        echo "2" > /zookeeper/data/myid
+        
+        #针对zk03，也就是13服务器：
+
+        echo "3" > /zookeeper/data/myid
+
+3. 配置文件修改
+
+* 在每一台部署了zookeeper的服务器上
+
+        #进入ZooKeeper配置目录
+        cd $ZOOKEEPER_HOME/conf
+
+        #新建配置文件
+        vim zoo.cfg
+
+        #写入以下内容并保存
+
+        tickTime=2000
+        initLimit=10
+        syncLimit=5
+        dataDir=/home/centos/zookeeper-3.4.14/data
+        dataLogDir=/home/centos/zookeeper-3.4.14/logs
+        clientPort=21810
+        server.1=10.0.11.11:28880:38880
+        server.2=10.0.11.12:28880:38880
+        server.3=10.0.11.13:28880:38880        
+
+4. 开放端口信息
+
+* 在每一台部署了zookeeper的服务器上
+
+        sudo firewall-cmd --add-port=21810/tcp --permanent
+        sudo firewall-cmd --add-port=28880/tcp --permanent
+        sudo firewall-cmd --add-port=38880/tcp --permanent
+        sudo firewall-cmd --reload
+
+5. 启动
+
+* 在每一台部署了zookeeper的服务器上
+
+        #进入ZooKeeper bin目录
+        cd $ZOOKEEPER_HOME/bin
+
+        #启动
+        nohup sh zkServer.sh start &
+
+
+
+- 配置方式：使用ZooInspector访问zookeeper服务并进行配置
+
+* [参考地址](https://juejin.im/post/5ba879ce6fb9a05d16588802)
+    
+
+8. ELK体系
+
+请参考{% post_link ELK单机日志系统搭建 %}
+
+9. Docker+kubernetes体系
+
+
+10. API管理工具--YApi安装
+
+启动方式，先启动MongoDB，再通过pm2 启动yapi项目
+
+请参考[YApi官方](http://yapi.demo.qunar.com/)安装方式。
+
+
+11. JIRA/Confluence的安装部署
+
+* 前提：需要安装docker和docker-compose，下载docker镜像包
+
+* 首先启动数据库
+
+        docker pull mysql:5.7
+
+        # 启动jira的数据库
+        docker run --name mysql-jira --restart always -p 46001:3306 -e MYSQL_ROOT_PASSWORD=123456 -e MYSQL_DATABASE=jira -e MYSQL_USER=jira -e MYSQL_PASSWORD=jira -d mysql:5.7 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+        # 针对jira的数据库设置
+
+        vim /etc/mysql/conf.d/mysql.cnf
+
+        添加下面的内容：
+
+        [mysql]
+        default-character-set=utf8
+        [client]
+        default-character-set=uft8
+
+        # 启动confluence的数据库
+        docker run --name mysql-confluence --restart always -p 46003:3306 -e MYSQL_ROOT_PASSWORD=123456 -e MYSQL_DATABASE=confluence -e MYSQL_USER=confluence -e MYSQL_PASSWORD=confluence -d mysql:5.7 --character-set-server=utf8 --collation-server=utf8_bin
+        
+        # 针对confluence的数据库的设置
+
+        vim /etc/mysql/conf.d/mysql.cnf
+
+        添加下面的内容：
+        
+        [mysql]
+        default-character-set=utf8
+
+        [client]
+        default-character-set=utf8
+
+        [mysqld]
+        character-set-server=utf8
+        collation-server=utf8_bin
+
+* 下载需要的jira和Confluence镜像信息
+
+        git clone https://github.com/zhangguanzhang/Dockerfile.git
+
+        cd ./Dockerfile/atlassian-jira
+
+
+* 构建jira镜像
+
+        # 不要忘记后面的“.”，表示当前目录下进行构建
+        docker build -t ht-jira:v7 . 
+
+        # 等待一段时间进行构建
+
+        # 查看已经构建完成的镜像
+        docker images 
+
+        REPOSITORY                              TAG                 IMAGE ID            CREATED             SIZE
+ht-jira                                 v1                  c4a747622b73        45 seconds ago      532MB
+
+        # 启动镜像
+
+        docker run --restart always --detach --link mysql-jira:mysql --publish 46002:8080 ht-jira:v7
+
+* 构建confluence镜像
+
+        # 不要忘记后面的“.”，表示当前目录下进行构建
+        docker build -t ht-confluence:v2 . 
+
+        # 等待一段时间进行构建
+
+        # 查看已经构建完成的镜像
+        docker images 
+
+        REPOSITORY                         TAG                 IMAGE ID            CREATED             SIZE
+ht-confluence                      v2                  75d3834d330f        27 minutes ago      785MB
+
+        # 启动镜像
+
+        docker run --restart always --detach --link mysql-confluence:mysql --publish 46004:8080 ht-confluence:v2
+
+
+* jira的用户信息
+
+    1. 管理员信息
+
+    管理员账户：HTAdmin
+
+    管理员邮箱：lisongyang@123.com
+
+    用户名：HTAdmin
+
+    密码：123456
+
+    2. 用户信息
+
+    各个用户为名字的汉语拼音字母小写，密码为123456.
+
+* confluence的用户信息
+
+    1. 管理员信息
+
+    全名：HTCAdmin
+
+    管理员邮箱：lsy@123.com
+
+    用户名：htcadmin
+
+    密码：123456
+
+    2. 用户信息
+
+    各个用户为名字的汉语拼音字母小写，密码为123456。
+
+
+* 访问地址
+
+jira：10.0.11.11:46002
+confluence：10.0.11.12.46004
+
+
+* 参考地址：
+
+        * https://zhangguanzhang.github.io/2019/02/19/jira-confluence/#jira%E6%95%B0%E6%8D%AE%E5%BA%93%E9%85%8D%E7%BD%AE
+
+        * https://blog.csdn.net/weixin_38229356/article/details/84875205
+
+        * https://github.com/zhangguanzhang/Dockerfile.git
+
+        * confluence文档：https://www.cwiki.us/pages/viewpage.action?pageId=917513
+        
+        * jira文档：https://www.cwiki.us/pages/viewpage.action?pageId=2393502
+
+## 注意事项
+
+1. 硬盘扩容
+
+参考地址：[参考链接](http://ttlop.com/2016/11/29/Centos-7-LVM-%E7%A3%81%E7%9B%98%E6%89%A9%E5%AE%B9/)
+
+2. 修改运行中的docker配置文件
+
+    首先停止所有的容器
+
+        $ sudo docker stop $(docker ps -a | awk '{ print $1}' | tail -n +2)
+
+    然后停止docker服务
+
+        $ sudo systemctl stop docker
+
+    备份容器的配置文件（需要管理员权限）
+
+        # cd /var/lib/docker/containers/de9c6501cdd3(容器编号)
+        # cp hostconfig.json hostconfig.json.bak
+        # cp config.v2.json config.v2.json.bak
+
+    修改配置文件，例如
+
+        # vim config.v2.json
+
+    重启docker服务
+
+        $ sudo systemctl start docker
+
+    重启docker镜像
+
+        $ sudo docker start $(docker ps -a | awk '{ print $1}' | tail -n +2
+
+3. CentOS 7 安装方式选择？
+
+* Desktop ：基本的桌面系统，包括常用的桌面软件，如文档查看工具。
+
+* Minimal Desktop：基本的桌面系统，包含的软件更少。
+
+* Minimal：基本的系统，不含有任何可选的软件包。
+
+* Basic Server ：安装的基本系统的平台支持，不包含桌面。
+
+* Database Server：基本系统平台，加上MySQL和PostgreSQL数据库，无桌面。
+
+* Web Server：基本系统平台，加上PHP，Web server，还有MySQL和PostgreSQL数据库的客户端，无桌面。
+
+* Virtual Host：基本系统加虚拟平台。
+
+* Software Development Workstation：包含软件包较多，基本系统，虚拟化平台，桌面环境，开发工具。
+
+而安装Linux基本是用来构建服务器的，所以基本上选择Basic Server即可。如果业务环境无法连接外网，尽量选择比minimal安装更高级别的安装方式，例如Software Development Workstation方式。
+
+4. 选取Linux版本原则
+
+尽量选择LTS（长期支持版）版本，5年期支持，社区有保障。第二选择就是选择次新版本，例如当前发行版本为CentOS 7.6，可以选择CentOS 7.4版本。尽量不要选择CentOS 6系列，因为长期维护支持马上到期。
+
+对照表：
+
+|发行版本 |	全力支持到期 |	维护支持到期|
+|-------|-----------|----------|
+|CentOS 6 |	2016 |	2020-11 |
+|CentOS 7 |	2019 |	2024-06 |
