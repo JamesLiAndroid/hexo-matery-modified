@@ -161,7 +161,7 @@ Elasticsearch/Kibana 还可以通过安装 x-pack 插件实现扩展功能，比
             // 执行sysctl -p使其生效
             $ sudo sysctl -p
 
-    3. JDK安装--参考[Linux系统初始化以及部署](../Linux日常运维操作.md)
+    3. JDK安装--参考{% post_link Linux日常运维操作 %}
 
 ## ElasticSearch的安装配置
 
@@ -617,7 +617,7 @@ Elasticsearch安装X-Pack插件（后续补充）
 
 配置完成后，在服务的Controller中，添加**log.info("测试日志");**代码，以此进行测试。
 
-编写完成后，对服务所要部署的服务器部署[log-pilot](https://github.com/AliyunContainerService/log-pilot)工具。转到微服务集群所在的服务器10.0.88.179，执行命令如下：
+编写完成后，对服务所要部署的服务器部署[log-pilot](https://github.com/AliyunContainerService/log-pilot)工具，直接将日志信息写入ElasticSearch中。转到微服务集群所在的服务器10.0.88.179，执行命令如下：
         
         // 拉取logpilot镜像
         $ docker pull registry.cn-hangzhou.aliyuncs.com/acs/log-pilot:0.9.5-filebeat
@@ -627,19 +627,22 @@ Elasticsearch安装X-Pack插件（后续补充）
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v /etc/localtime:/etc/localtime   \
             -v /:/host:ro   \
-            --cap-add S YS_ADMIN   \
-            -e  LOGSTASH_HOST=192.168.188.174    \ 
-            -e LOGSTASH_PORT=5044  \  
+            --cap-add SYS_ADMIN   \
+            -e FILEBEAT_OUTPUT=elasticsearch \
+            -e ELASTICSEARCH_HOST=192.168.188.174    \ 
+            -e ELASTICSEARCH_PORT=9200  \  
             registry.cn-hangzhou.aliyuncs.com/acs/log-pilot:0.9.5-filebeat
 
         // 以守护进程的方式后台启动
-        $ docker run -d     \
+        $ docker run -d  --restart=always   \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v /etc/localtime:/etc/localtime   \
             -v /:/host:ro   \
-            --cap-add S YS_ADMIN   \
-            -e  LOGSTASH_HOST=192.168.188.174    \ 
-            -e LOGSTASH_PORT=5044  \  
+            --cap-add SYS_ADMIN   \
+            --privileged    \
+            -e FILEBEAT_OUTPUT=elasticsearch \
+            -e ELASTICSEARCH_HOST=192.168.188.174    \ 
+            -e ELASTICSEARCH_PORT=9200  \  
             registry.cn-hangzhou.aliyuncs.com/acs/log-pilot:0.9.5-filebeat
 
 启动后，将会看到各类日志信息在控制台上输出。随后回到192.168.188.174服务器，配置Logstash配置文件，操作如下：

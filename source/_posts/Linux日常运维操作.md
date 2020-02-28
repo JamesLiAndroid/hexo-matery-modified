@@ -50,8 +50,8 @@ categories: DevOps
         2: ens192: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
         ...
 
-        // 2. 修改网卡的配置文件
-        # vi /etc/sysconfig/network-scripts/ifcfg-ens192
+        // 2. 修改网卡的配置文件，对应上方的ens-192
+        # vi /etc/sysconfig/network-scripts/ifcfg-ens192 
         // 按照以下配置修改
         TYPE=Ethernet
         PROXY_METHOD=none
@@ -88,12 +88,30 @@ categories: DevOps
 
         // 此时表示网络设置完成
 
+如果网络依旧不能使用，例如ping baidu.com不通，但是ping 114.114.114.114成功，这时需要设置DNS服务器地址。
+
+        // 编辑/etc/resolv.conf，如果是新安装的机器，这个文件的内容可能为空
+        # vim /etc/resolv.conf
+
+        // 添加下面的内容：
+        nameserver 114.114.114.114 // (电信的DNS)
+
+        nameserver 8.8.8.8 //（googel的DNS）
+
+        nameserver 1.1.1.1
+
+        // :wq保存文件
+
+        // 重启network服务
+        # systemctl restart network
+
+
 ### 1. 软件源配置
 
 * 更新源
 
         // 1. 备份一下当前的repo文件
-        # mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bar
+        # mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bak
 
         // 2. 下载yum源，目前这里使用163的
         # wget http://mirrors.163.com/.help/CentOS7-Base-163.repo
@@ -105,6 +123,9 @@ categories: DevOps
         # yum makecache
 
         // 等待更新完成即可进行更新系统操作
+
+        // 5. 安装epel源---常用工具安装必备
+        # yum install -y epel-release
 
 
 * 更新系统
@@ -355,6 +376,34 @@ categories: DevOps
 
     其中**-p*表示指定端口号，*centos*就是我们在前面设置的用户名，**10.0.11.11*需要替换为你自己的真实ip地址。在出现输入密码的位置，输入用户对应的密码信息，回车即可登录服务器。
 
+    另外，在重启sssh服务的时候，可能会报错，如下：
+
+        # systemctl restart sshd
+        Job for sshd.service failed because the control process exited with error code. See "systemctl status sshd.service" and "journalctl -xe" for details.
+
+        // 执行后无法启动，查看报错信息
+        
+        # journalctl -xe
+        
+        error: Bind to port 522 on 0.0.0.0 failed: Permission denied.
+        error: Bind to port 522 on :: failed: Permission denied.
+        fatal: Cannot bind any address.
+
+        // 当端口设置完成后，需要在selinux设置允许该端口作为ssh的连接端口
+        
+        // 首先安装管理工具
+        # yum install -y policycoreutils-python
+        
+        // 开放该端口使用
+        # semanage port -a -t ssh_port_t -p tcp 522
+
+        // 防火墙开启访问信息
+        # firewall-cmd --zone=public --add-port=552/tcp --permanent
+        # firewall-cmd --reload
+
+    上边552代表你在/etc/ssh/sshd_config中设置的端口号。
+
+    参考地址：https://wildwolf.name/centos-7-how-to-change-ssh-port/
 
 ## 软件安装
 
@@ -452,7 +501,7 @@ categories: DevOps
         // 安装最新的稳定版本的docker或者安装指定版本的docker，执行一条命令即可
         # yum install -y docker-ce
         // 或者执行下面的命令
-        # yum install -y docker-ce-19.0.3.ce
+        # yum install -y docker-ce-19.03.6
 
         // 配置docker服务以及设置开机启动
         # systemctl start docker
@@ -467,14 +516,39 @@ categories: DevOps
     安装完成后，需要配置当前用户在不需要root权限的情况下可以正常使用docker的各项命令。例如我们添加centos用户到docker可执行的组中。配置命令如下：
 
         $ sudo groupadd docker
-        $ sudo gpasswd -a centos docker
+        $ sudo usermod -aG docker ${USER}
         $ sudo systemctl restart docker
+
+        // 建议这时候重启下服务器
+        // 否则可能在执行docker pull命令的时候报错：Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Post http://%2Fvar%2Frun%2Fdocker.sock/v1.40/images/create?fromImage=hello-world&tag=latest: dial unix /var/run/docker.sock: connect: permission denied
+        # reboot
+
+        // 如果不重启服务器，可以执行下面的命令解决
+        $ sudo setfacl --modify user:centos:rw /var/run/docker.sock
 
     这样docker就全部安装完成了。可以在用户centos环境下，测试
 
         $ docker run hello-world
 
     如果可以正常输出hello-world，则说明成功。
+
+    另外，可能因为某些原因无意间执行了yum update或者apt-get -y upgrade;导致Docker版本升级。为了避免此类问题发生，建议在安装好Docker后对Docker软件进行锁定，防止Docker意外更新。
+
+
+        // 安装yum-plugin-versionlock插件
+        # yum install yum-plugin-versionlock -y
+
+        // 锁定软件包
+        # yum versionlock add docker-ce docker-ce-cli
+
+        // 查看已锁定的软件包
+        # yum versionlock list
+
+        // 解锁指定的软件包
+        # yum versionlock delete <软件包名称>
+
+        // 解锁所有的软件包
+        # yum versionlock clear
 
     最后，安装docker-compose，确保前面已经安装好docker了！
 
@@ -1047,11 +1121,11 @@ ht-confluence                      v2                  75d3834d330f        27 mi
 
     1. 管理员信息
 
-    管理员账户：HTAdmin
+    管理员账户：HTCAdmin
 
     管理员邮箱：lisongyang@123.com
 
-    用户名：HTAdmin
+    用户名：HTCAdmin
 
     密码：123456
 
@@ -1158,3 +1232,29 @@ confluence：10.0.11.12.46004
 |-------|-----------|----------|
 |CentOS 6 |	2016 |	2020-11 |
 |CentOS 7 |	2019 |	2024-06 |
+
+5. 利用scp命令上传下载文件夹
+
+使用scp命令，远程上传下载文件/文件夹
+1、从服务器下载文件
+scp username@servername:/path/filename /local/path
+例如: scp ubuntu@117.50.20.56:/ygf/data/data.txt /desktop/ygf   把117.50.20.56上的/ygf/data/data.txt 的文件下载到/desktop/ygf目录中
+
+ 
+
+2、上传本地文件到服务器
+scp /local/path/local_filename username@servername:/path
+例如: scp /ygf/learning/deeplearning.doc  ubuntu@117.50.20.56:/ygf/learning    把本机/ygf/learning/目录下的deeplearning.doc文件上传到117.50.20.56这台服务器上的/ygf/learning目录中
+
+ 
+
+3、从服务器下载整个目录
+scp -r username@servername:/path /path
+例如: scp  -r  ubuntu@117.50.20.56:/home/ygf/data  /local/local_dir    “-r”命令是文件夹目录，把当前/home/ygf/data目录下所有文件下载到本地/local/local_dir目录中
+
+
+4、上传目录到服务器
+scp  -r  /path  username@servername:/path
+例如: scp -r  /ygf/test  ubuntu@117.50.20.56:/ygf/tx     “-r”命令是文件夹目录，把当前/ygf/test目录下所有文件上传到服务器的/ygf/tx/目录中
+
+参考自：https://www.cnblogs.com/tectal/p/9478326.html
