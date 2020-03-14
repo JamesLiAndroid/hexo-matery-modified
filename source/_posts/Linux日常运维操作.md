@@ -168,6 +168,15 @@ categories: DevOps
         // 7. telnet工具
         # yum install -y telnet 
 
+        // 8. 安装pstree工具集
+        # yum install -y psmisc
+
+        // 9. 安装sysstat工具集，包括iostat这样的命令
+        # yum install -y sysstat
+
+        // 10. 安装更直观的htop来替代top命令
+        # yum install -y htop
+
     注意：“-y”代表同意安装该程序，无需在安装时确定
 
 
@@ -404,6 +413,61 @@ categories: DevOps
     上边552代表你在/etc/ssh/sshd_config中设置的端口号。
 
     参考地址：https://wildwolf.name/centos-7-how-to-change-ssh-port/
+
+### 7. sshd进程提升优先级
+
+建议使用 **nice** 命令或者**renice**命令将 sshd 进程的优先级调高，这样当系统内存紧张时，还能勉强登陆服务器进行调试，然后分析故障。操作如下：
+
+    // 找到该进程信息
+    $ ps -aux | grep sshd
+    // 展示下面的信息
+    root      2567  0.0  0.0 158936  5684 ?        Ss   08:34   0:00 sshd: centos [priv]
+    centos    2601  0.0  0.0 158936  2452 ?        S    08:35   0:00 sshd: centos@pts/0
+    root      2994  0.0  0.0 158936  5684 ?        Ss   08:51   0:00 sshd: centos [priv]
+    centos    3000  0.0  0.0 158936  2452 ?        S    08:51   0:00 sshd: centos@pts/1
+    centos    4474  0.0  0.0 112712   964 pts/1    S+   09:36   0:00 grep --color=auto sshd
+    root     23773  0.0  0.0 112920   460 ?        Ss   Mar11   0:00 /usr/sbin/sshd -D
+
+    // 查看进程优先级
+    $  ps ax -o pid,nice,comm | grep sshd
+     2567   0 sshd
+     2601   0 sshd
+     2994   0 sshd
+     3000   0 sshd
+    23773   0 sshd
+
+    // 修改第一个进程的id信息，将优先级提升到最高
+    $ sudo renice -20 -p 23773
+
+    // 查看进程优先级
+    $  ps ax -o pid,nice,comm | grep sshd
+     2567   0 sshd
+     2601   0 sshd
+     2994   0 sshd
+     3000   0 sshd
+    23773 -20 sshd
+
+    // 退出后重新登录，再查看
+    $ ps aux | grep sshd
+    root      2567  0.0  0.0 158936  5684 ?        Ss   08:34   0:00 sshd: centos [priv]
+    centos    2601  0.0  0.0 158936  2452 ?        S    08:35   0:00 sshd: centos@pts/0
+    root      4944  0.5  0.0 158936  5684 ?        S<s  09:40   0:00 sshd: centos [priv]
+    centos    4959  0.0  0.0 158936  2300 ?        S<   09:41   0:00 sshd: centos@pts/1
+    centos    4997  0.0  0.0 112716   960 pts/1    S<+  09:41   0:00 grep --color=auto sshd
+    root     23773  0.0  0.0 112920   460 ?        S<s  Mar11   0:00 /usr/sbin/sshd -D
+
+    $ ps ax -o pid,nice,comm | grep sshd
+    2567   0 sshd
+    2601   0 sshd
+    4944 -20 sshd
+    4959 -20 sshd
+    23773 -20 sshd
+
+可以看到的是sshd进程中，出现**S<s**，"<"代表高优先级进程标志，说明测试成功。
+
+参考链接：
+
+* 关于进程相关命令的说明：https://www.cnblogs.com/alongdidi/p/linux_process.html
 
 ## 软件安装
 

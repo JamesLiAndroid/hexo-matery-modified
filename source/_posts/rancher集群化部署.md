@@ -411,7 +411,7 @@ ingress:
 设置完成后，下面可以正式开始部署了。执行下面的命令开始安装：
 
     // 部署并启动k8s集群
-    $ rke up --config ./rancher-cluster.yml
+    $ rke up --config ./cluster.yml
 
 这时候开始进入部署状态。将会在三台服务器上进行部署，拉取相应镜像进行操作。
 
@@ -831,7 +831,7 @@ rancher.com就是后面访问rancher的域名，需要在232、239、241服务�
 
 ## 其它问题
 
-在后续运行的过程中，发现有部分服务始终处于CrashLoopBackOff的状态并且重启次数过多，如下：
+一、**在后续运行的过程中，发现有部分服务始终处于CrashLoopBackOff的状态并且重启次数过多。**如下：
 
     $ kubectl get pod -n cattle-system
     NAME                                    READY   STATUS             RESTARTS   AGE
@@ -902,7 +902,483 @@ cluster-agent并不能进行通讯，看到443问题，猜想是证书出了问�
     tls.key:  1675 bytes
     tls.crt:  1334 bytes
 
-但是不影响使用，rancher可以照常进行访问。
+临时不影响使用，rancher可以照常进行访问。但是在两天后，整个系统挂掉了。rancher页面在访问的时候报错了，所有rancher相关的docker镜像失败了。
+
+尝试使用网上的方案解决，在命令行执行以下命令：
+
+    $ kubectl  -n cattle-system \
+    patch deployments cattle-cluster-agent --patch '{
+        "spec": {
+            "template": {
+                "spec": {
+                    "hostAliases": [
+                        {
+                            "hostnames":
+                            [
+                                "rancher.mine.com"
+                            ],
+                                "ip": "192.168.238.240"
+                        }
+                    ]
+                }
+            }
+        }
+    }'
+
+    $ kubectl -n cattle-system \
+    patch  daemonsets cattle-node-agent --patch '{
+        "spec": {
+            "template": {
+                "spec": {
+                    "hostAliases": [
+                        {
+                            "hostnames":
+                            [
+                                "rancher.mine.com"
+                            ],
+                                "ip": "192.168.238.240"
+                        }
+                    ]
+                }
+            }
+        }
+    }'
+
+执行过后，agent相关的pod依旧在重启。
+
+目前怀疑是证书的问题，现在通过重新签发证书，再进行操作。
+
+**解决方案：** 
+
+1. 重新签发证书  
+
+    $ docker pull superseb/omgwtfssl
+
+    // 开始签发证书，将证书存储在/home/centos/nginx/new_cert路径中
+    $ docker run -v /home/centos/nginx/new_cert:/certs -e CA_SUBJECT="mine-root-CA" -e CA_EXPIRE="1825" -e SSL_EXPIRE="365" -e SSL_SUBJECT="rancher.mine.com" -e SSL_DNS="rancher.mine.com" -e SILENT="true" superseb/omgwtfssl
+
+    // 查看生成的证书信息
+    $ ls 
+    ca-key.pem    ca.pem     ca.srl    cert.pem    key.csr    key.pem     openssl.cnf    secret.yaml
+
+    // 证书变更
+    $ cp ca.crt cacert.pem
+
+证书生成后，需要使用的是cacert.pem、cert.pem和key.pem这三个证书。
+
+
+2. 清理rancher安装，使用新的清理脚本，参考自：https://github.com/theAkito/rancher-helpers/blob/master/scripts/cleanup_rancher.sh
+
+    $ vim clean-all.sh
+    // 在该文件中输入下面的信息
+```
+    #!/bin/bash
+    #########################################################################
+    # Copyright (C) 2019-2020 Akito <the@akito.ooo>                         #
+    #                                                                       #
+    # This program is free software: you can redistribute it and/or modify  #
+    # it under the terms of the GNU General Public License as published by  #
+    # the Free Software Foundation, either version 3 of the License, or     #
+    # (at your option) any later version.                                   #
+    #                                                                       #
+    # This program is distributed in the hope that it will be useful,       #
+    # but WITHOUT ANY WARRANTY; without even the implied warranty of        #
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          #
+    # GNU General Public License for more details.                          #
+    #                                                                       #
+    # You should have received a copy of the GNU General Public License     #
+    # along with this program. If not, see <http://www.gnu.org/licenses/>.  #
+    #########################################################################
+    # Based on
+    # https://github.com/rancher/rancher/issues/19882#issuecomment-501056386
+
+    ## Cleans up Rancher with Kubernetes *entirely*.
+    ## After running this script you are able to
+    ## set up Rancher entirely from scratch
+    ## without any complaints about remains
+    ## from the previous installation.
+
+    ## Run as root!
+    ## Only works reliably with GNU Bash.
+    ## Expects `systemd` on the host.
+
+    #################################   Boilerplate of the Boilerplate   ####################################################
+    # Coloured Echoes                                                                                                       #
+    function red_echo      { echo -e "\033[31m$@\033[0m";   }                                                               #
+    function green_echo    { echo -e "\033[32m$@\033[0m";   }                                                               #
+    function yellow_echo   { echo -e "\033[33m$@\033[0m";   }                                                               #
+    function white_echo    { echo -e "\033[1;37m$@\033[0m"; }                                                               #
+    # Coloured Printfs                                                                                                      #
+    function red_printf    { printf "\033[31m$@\033[0m";    }                                                               #
+    function green_printf  { printf "\033[32m$@\033[0m";    }                                                               #
+    function yellow_printf { printf "\033[33m$@\033[0m";    }                                                               #
+    function white_printf  { printf "\033[1;37m$@\033[0m";  }                                                               #
+    # Debugging Outputs                                                                                                     #
+    function white_brackets { local args="$@"; white_printf "["; printf "${args}"; white_printf "]"; }                      #
+    function echoInfo   { local args="$@"; white_brackets $(green_printf "INFO") && echo " ${args}"; }                      #
+    function echoWarn   { local args="$@";  echo "$(white_brackets "$(yellow_printf "WARN")" && echo " ${args}";)" 1>&2; }  #
+    function echoError  { local args="$@"; echo "$(white_brackets "$(red_printf    "ERROR")" && echo " ${args}";)" 1>&2; }  #
+    # Silences commands' STDOUT as well as STDERR.                                                                          #
+    function silence { local args="$@"; ${args} &>/dev/null; }                                                              #
+    # Check your privilege.                                                                                                 #
+    function checkPriv { if [[ "$EUID" != 0 ]]; then echoError "Please run me as root."; exit 1; fi;  }                     #
+    # Returns 0 if script is sourced, returns 1 if script is run in a subshell.                                             #
+    function checkSrc { (return 0 2>/dev/null); if [[ "$?" == 0 ]]; then return 0; else return 1; fi; }                     #
+    # Prints directory the script is run from. Useful for local imports of BASH modules.                                    #
+    # This only works if this function is defined in the actual script. So copy pasting is needed.                          #
+    function whereAmI { printf "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )";   }                     #
+    # Alternatively, this alias works in the sourcing script, but you need to enable alias expansion.                       #
+    alias whereIsMe='printf "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"'                            #
+    #########################################################################################################################
+    function containerd_restart { silence "systemctl restart containerd"; }
+    function rmMetaDB { silence "rm -f /var/lib/containerd/io.containerd.metadata.v1.bolt/meta.db"; }
+    function docker_start { silence "systemctl start docker"; }
+    function docker_stop { silence "systemctl stop docker"; }
+    function finish_line { white_printf "OK\n"; }
+    function checkSys {
+    ## Makes sure that script is not accidentally run on wrong target system.
+    ## Exits if Docker is not installed.
+    silence "docker version"
+    if [[ $? == 0 ]]; then
+        echoInfo "Docker exists."
+        return 0
+    else
+        echoError "Docker not installed/running on system. Exiting."
+        exit 1
+    fi
+    }
+    function docker_restart {
+    docker_stop
+    echoInfo "Restarting Docker..."
+    sleep 10;
+    docker_start
+    if [[ $? == 0 ]]; then
+        echoInfo "Docker restarted!"
+        return 0
+    else
+        echoError "Docker restart failed!"
+        white_printf "Manually stop docker then wait 20 seconds and start it again.\n"
+        exit 1
+    fi
+    }
+    function rmContainers {
+    ## Removes ALL containers.
+    silence "docker rm -f $(docker ps -aq)" && \
+    echoInfo "Successfully removed all Docker containers." || \
+    echoInfo "No Docker containers exist! Skipping."
+    }
+    function rmVolumes {
+    ## Removes ALL volumes.
+    silence "docker volume rm $(docker volume ls -q)" && \
+    echoInfo "Successfully removed all Docker volumes." || \
+    echoInfo "No Docker volumes exist! Skipping."
+    }
+    function rmLocs {
+    ## Removes all Rancher and Kubernetes related folders.
+    declare -a FOLDERS
+    FOLDERS=( "/etc/ceph" \
+                "/etc/cni" \
+                "/etc/kubernetes" \
+                "/opt/cni" \
+                "/opt/rke" \
+                "/run/secrets/kubernetes.io" \
+                "/run/calico" \
+                "/run/flannel" \
+                "/var/lib/calico" \
+                "/var/lib/etcd" \
+                "/var/lib/cni" \
+                "/var/lib/kubelet" \
+                "/var/lib/rancher/rke/log" \
+                "/var/log/containers" \
+                "/var/log/pods" \
+                "/var/run/calico" \
+            )
+    for loc in "${FOLDERS[@]}"; do
+        if [ -d ${loc} ]; then
+        timeout 15s rm -fr ${loc} || \
+            { \
+            echoError   "Timed out while trying to remove ${loc}."
+            yellow_echo "Run \"rm -fr ${loc}\" manually."
+            exit 2
+            }
+        echoInfo "${loc} successfully deleted."
+        else
+        echoInfo "${loc} not found! Skipping."
+        fi
+    done
+    ## Removes Rancher installation from default installation directory.
+    local rancher_loc="/opt/rancher"
+    if [ -d ${rancher_loc} ]; then
+        silence "rm -fr /opt/rancher" && \
+        echoInfo "Rancher successfully removed from ${rancher_loc}." || \
+        echoError "Rancher could not be removed from ${rancher_loc}!"
+    else
+        echoInfo "Rancher not found in ${rancher_loc}! Skipping."
+    fi
+    }
+    function cleanFirewall {
+    ## Removes Firewall entries related to Rancher or Kubernetes.
+    IPTABLES="/sbin/iptables"
+    cat /proc/net/ip_tables_names | while read table; do
+        silence "$IPTABLES -t $table -L -n" | while read c chain rest; do
+            if test "X$c" = "XChain" ; then
+            silence "$IPTABLES -t $table -F $chain"
+            fi
+        done
+        silence "$IPTABLES -t $table -X"
+    done
+    echoInfo "Firewall rules cleared."
+    }
+    function rmDevs {
+    ## Unmounts all Rancher and Kubernetes related virtual devices and volumes.
+    fail_mount=false
+    fail_pvc=false
+    local -a mount_list=( $(mount | grep tmpfs | grep '/var/lib/kubelet' | awk '{ print $3 }') )
+    for mount in "${mount_list[@]}" /var/lib/kubelet /var/lib/rancher; do
+        silence "umount -f ${mount}"
+        if [[ $? ]]; then
+        echoInfo  "${mount} successfully unmounted."
+        else
+        echoError "${mount} could not be unmounted."
+        fi
+    done
+    ## Unmounts all Persistent Volume Claims, forcefully.
+    local -a pvc_list=( $(mount | grep '/var/lib/kubelet/pods' | awk '{ print $3 }') )
+    for pvc in "${pvc_list[@]}"; do
+        silence "umount -f ${pvc}"
+        if [[ $? ]]; then
+        echoInfo  "$(printf ${pvc} | cut -c 1-45)... successfully unmounted."
+        else
+        echoError "${pvc} could not be unmounted."
+        fi
+    done
+    }
+    function fazit {
+    ## Checks for fail flags set during other processes and
+    ## outputs a summary of possible errors.
+    if   [[  $fail_mount == false ]] && [[  $fail_pvc == false ]]; then
+        :
+    elif [[  $fail_mount == true ]] || [[  $fail_pvc == true ]]; then
+        echoError "Failed to unmount some volumes."
+    fi
+    }
+    ############################################
+    ############################################
+    # Checks if user running the script is root.
+    checkPriv
+    # Makes sure that script is not accidentally run on wrong target system.
+    # Exits if Docker is not installed.
+    checkSys
+    # Removes ALL containers.
+    rmContainers
+    # Removes ALL volumes.
+    rmVolumes
+    # Unmounts all Rancher and Kubernetes related virtual devices and volumes.
+    rmDevs
+    # Removes all Rancher and Kubernetes related folders.
+    # Removes Rancher installation from default installation directory.
+    rmLocs
+    # Removes metadata database.
+    rmMetaDB
+    # Removes Firewall entries related to Rancher or Kubernetes.
+    cleanFirewall
+    # Restarts services, to apply previous removals.
+    containerd_restart
+    # Slowed down Docker restart. Needs a pause, because else it complains about "too quick" restarts.
+    docker_restart
+    # Checks for fail flags set during other processes and outputs a summary of possible errors.
+    fazit
+    # Process finished.
+    finish_line
+```
+
+    // :wq对文件进行保存
+
+    $ sudo chmod +x clean-all.sh
+
+    // 执行清理操作，一定使用sudo提权
+    $ sudo ./clean-all.sh  
+
+3. 重新安装，制定证书信息 
+
+清理完成后，重新使用rke安装k8s，配置文件cluster.yml不变。可以拷贝到其它文件夹进行操作
+
+    $ mkdir new_rancher
+
+    $ cd new_rancher/
+
+    // 拷贝到该文件夹
+    $ cp /home/centos/cluster/cluster.yml ./
+
+    // 执行配置文件
+    $ rke up --config ./cluster.yml
+
+当安装完成后，操作参考之前的步骤即可。验证安装后，等待10分钟左右，开始安装rancher集群。
+
+    // 转到生成证书的文件夹
+    $ cd /home/centos/nginx/new_cert
+
+    // 创建namespace
+    $ kubectl create ns cattle-system
+    
+    // 创建证书信息
+    $ kubectl -n cattle-system create secret tls tls-rancher-ingress --cert=./cert.pem --key=./key.pem
+
+    // 创建生成证书的根证书信息
+    $ kubectl -n cattle-system create secret generic tls-ca --from-file=cacerts.pem
+
+    // 执行新的安装方式，多了一个--set privateCA=true
+    $ helm install rancher rancher-stable/rancher\
+          --namespace cattle-system \
+          --set hostname=rancher.mine.com \
+          --set ingress.tls.source=secret \
+          --set privateCA=true
+
+这样就可以了。
+
+4. nginx证书更换 
+
+需要将已有的证书拷贝到之前nginx证书所在的目录信息。
+
+    $ sudo cp cert.pem /etc/nginx/cert/
+
+    $ sudo cp key.pem /etc/nginx/cert/
+
+    // 修改配置文件信息
+    $ sudo vim /etc/nginx/nginx.conf
+    // 找到ssl_certificate开头的内容进行修改
+    ssl_certificate cert/cert.pem;
+    ssl_certificate_key cert/key.pem;
+
+    // :wq保存退出
+
+    // 检测配置文件修改
+    $ sudo nginx -t
+
+    // 重启nginx
+    $ sudo systemctl restart nginx 
+
+5. 重新访问
+
+    // 使用curl进行访问
+    $ curl -L -k rancher.mine.com
+
+    // 输出json信息，已经可以了
+
+6. 重新设置环境变量
+
+由于配置文件的变更，需要更改kube_config_cluster.yml的新路径。由于cluster.yml有变更，生成了新的kube_config_cluster.yml文件。
+
+    $ vim ~/.bashrc
+    // 将原来
+    // export KUBECONFIG=/home/centos/cluster/kube_config_cluster.conf
+    // 更改为
+    export KUBECONFIG=/home/centos/cluster/new_rancher/kube_config_cluster.conf
+
+    // :wq保存退出
+
+后续使用kubectl进行管理即可。
+    
+二、**关于cattle-cluster-agent处于CrashLoopBackOff的问题**
+
+    $ kubectl get pods -n cattle-system
+    NAME                                    READY   STATUS             RESTARTS   AGE
+    cattle-cluster-agent-85f4fcb5db-pwlgh   0/1     CrashLoopBackOff   23         147m
+    cattle-node-agent-2mt2z                 1/1     Running            0          147m
+    cattle-node-agent-c29zr                 1/1     Running            0          147m
+    cattle-node-agent-dzc7z                 1/1     Running            0          147m
+    rancher-7745c8fdbb-2x576                1/1     Running            2          164m
+    rancher-7745c8fdbb-kpdz2                1/1     Running            2          164m
+    rancher-7745c8fdbb-w2vxz                1/1     Running            0          164m
+
+    $ kubedescribe pod cattle-cluster-agent-85f4fcb5db-pwlghwlgh -n cattle-system
+    Name:         cattle-cluster-agent-85f4fcb5db-pwlgh
+    Namespace:    cattle-system
+    Priority:     0
+    Node:         10.0.88.232/10.0.88.232
+    Start Time:   Tue, 03 Mar 2020 14:58:49 +0800
+    Labels:       app=cattle-cluster-agent
+                pod-template-hash=85f4fcb5db
+    Annotations:  cni.projectcalico.org/podIP: 10.42.2.5/32
+    Status:       Running
+    IP:           10.42.2.5
+    IPs:
+    IP:           10.42.2.5
+    Controlled By:  ReplicaSet/cattle-cluster-agent-85f4fcb5db
+    Containers:
+    cluster-register:
+        Container ID:   docker://b6caca843298a2544fac374e28bbb8f9e1d901c7cad4b7b4915b40608ef1260b
+        Image:          rancher/rancher-agent:v2.3.5
+        Image ID:       docker-pullable://rancher/rancher-agent@sha256:e6aa36cca0d3ce9fea180add5b620baabd823fb34f9d100b7a8d3eb734392c37
+        Port:           <none>
+        Host Port:      <none>
+        State:          Waiting
+        Reason:       CrashLoopBackOff
+        Last State:     Terminated
+        Reason:       Error
+        Exit Code:    1
+        Started:      Tue, 03 Mar 2020 17:29:35 +0800
+        Finished:     Tue, 03 Mar 2020 17:31:45 +0800
+        Ready:          False
+        Restart Count:  24
+        Environment:
+        CATTLE_SERVER:       https://rancher.icpcloud.com
+        CATTLE_CA_CHECKSUM:  903483819f88d325eb730ee3017172cac4370a13b7bb1579b7a6373da2defc1e
+        CATTLE_CLUSTER:      true
+        CATTLE_K8S_MANAGED:  true
+        Mounts:
+        /cattle-credentials from cattle-credentials (ro)
+        /var/run/secrets/kubernetes.io/serviceaccount from cattle-token-zrzb4 (ro)
+    Conditions:
+    Type              Status
+    Initialized       True
+    Ready             False
+    ContainersReady   False
+    PodScheduled      True
+    Volumes:
+    cattle-credentials:
+        Type:        Secret (a volume populated by a Secret)
+        SecretName:  cattle-credentials-687d480
+        Optional:    false
+    cattle-token-zrzb4:
+        Type:        Secret (a volume populated by a Secret)
+        SecretName:  cattle-token-zrzb4
+        Optional:    false
+    QoS Class:       BestEffort
+    Node-Selectors:  <none>
+    Tolerations:
+    Events:
+    Type     Reason   Age                    From                  Message
+    ----     ------   ----                   ----                  -------
+    Warning  BackOff  3m4s (x444 over 147m)  kubelet, 10.0.88.232  Back-off restarting failed container
+    $ ssh -p 15555 centos@10.0.88.232
+    Last login: Tue Mar  3 16:04:54 2020 from k8s-rke-node-start
+    $ curl -k https://rancher.icpcloud.com/ping
+    pong
+
+    $ kubectl logs -f cattle-cluster-agent-85f4fcb5db-pwlgh -n cattle-system
+    INFO: Environment: CATTLE_ADDRESS=10.42.2.5 CATTLE_CA_CHECKSUM=903483819f88d325eb730ee3017172cac4370a13b7bb1579b7a6373da2defc1e CATTLE_CLUSTER=true CATTLE_INTERNAL_ADDRESS= CATTLE_K8S_MANAGED=true CATTLE_NODE_NAME=cattle-cluster-agent-85f4fcb5db-pwlgh CATTLE_SERVER=https://rancher.icpcloud.com
+    INFO: Using resolv.conf: nameserver 10.43.0.10 search cattle-system.svc.cluster.local svc.cluster.local cluster.local options ndots:5
+    ERROR: https://rancher.icpcloud.com/ping is not accessible (Failed to connect to rancher.icpcloud.com port 443: Connection timed out)
+
+**解决方案：**
+
+利用kubectl edit命令进行修改：
+
+    $ kubectl edit deploy/cattle-cluster-agent -n cattle-system
+    // 在出现的文本操作环境中，找到dnsPolicy: ClusterFirst选项，作如下修改
+    dnsPolicy: Default
+
+    // :wq保存退出
+
+    // 查看状态
+    $ kubectl get pods -n cattle-system
+    NAME                                    READY   STATUS        RESTARTS   AGE
+    cattle-cluster-agent-6c5485c4fc-vd6bm   1/1     Running       0          8s
+    cattle-cluster-agent-85f4fcb5db-pwlgh   1/1     Terminating   26         166m
+
+
+参考自：https://github.com/rancher/rancher/issues/16454#issuecomment-544621587
 
 ## 参考文章
 
@@ -919,3 +1395,5 @@ cluster-agent并不能进行通讯，看到443问题，猜想是证书出了问�
 * 视频教程：https://space.bilibili.com/430496045?from=search&seid=8060734016441754889
 * 私有证书签发：https://linkscue.com/posts/2019-06-26-ca-and-self-signed-certificates/
 * nginx证书安装：https://www.jianshu.com/p/02c25d0dd451
+* 付费文章，解决证书问题：https://blog.csdn.net/wxb880114/article/details/102787872
+* docker方式签发证书：https://medium.com/@superseb/zero-to-rancher-2-x-single-install-using-created-self-signed-certificates-in-5-minutes-5f9fe11fceb0
