@@ -164,6 +164,9 @@ categories:
     // 安装
     $ sudo yum install  nfs-utils rpcbind -y
 
+    // 额外需要安装的包
+    $ sudo yum install -y cifs-utils
+
 其次启动RPC服务和NFS服务并检查，
 
     // 启动rpc服务并设置开机启动

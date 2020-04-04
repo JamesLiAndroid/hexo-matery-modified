@@ -97,7 +97,7 @@ categories: DevOps
         nameserver 114.114.114.114 // (电信的DNS)
 
         nameserver 8.8.8.8 //（googel的DNS）
-
+yum 
         nameserver 1.1.1.1
 
         // :wq保存文件
@@ -109,6 +109,9 @@ categories: DevOps
 ### 1. 软件源配置
 
 * 更新源
+
+        // 0. 转到软件路径下
+        # cd /etc/yum.repos.d/
 
         // 1. 备份一下当前的repo文件
         # mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bak
