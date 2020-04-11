@@ -1011,6 +1011,8 @@ $ kubectl apply -f k8s-zk.yaml -n test-zookeeper
 
 2. 分布式id服务的部署
 
+该分布式id项目基于[美团的开源的分布式id生成器](https://github.com/Meituan-Dianping/Leaf)，使用雪花算法生成id信息。
+
 在zookeeper安装完成后，继续进行分布式id的部署，分布式id使用雪花算法生成id信息，需要依赖zookeeper服务进行生成。首先更改配置文件，连接zookeeper如下：
 
 ```properties
@@ -1032,7 +1034,7 @@ eureka.instance.prefer-ip-address=true
 eureka.instance.instance-id=${spring.application.name}@${spring.cloud.client.ip-address}:${server.port}
 eureka.client.service-url.defaultZone=http://hoteam:hoteam2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://hoteam:hoteam2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://hoteam:hoteam2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
 eureka.instance.ipAddress=${spring.cloud.client.ip-address}
-#eureka.client.service-url.defaultZone=http://hoteam:hoteam2019@10.0.93.153:19011/eureka/
+#eureka.client.service-url.defaultZone=http://hoteam:hoteam2019@192.168.123.93.153:19011/eureka/
 
 # 2. Feign中的Ribbon配置
 # 让 Hystrix 的超时时间大于 Ribbon 的超时时间，否则 Hystrix 命令超时后，该命令直接熔断，重试机制就没有任何意义了。
