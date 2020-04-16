@@ -227,13 +227,14 @@ kt-connect demo from tomcat9
 
 ```
 
-然后使用本地服务替换线上的服务，命令如下：
+然后使用本地服务替换线上的服务，新打开一个命令行终端，命令如下：
 
 ```
 // 先在命令行中配置代理信息
 // 参考上面日志中的提示Start SOCKS5 Proxy: export http_proxy=socks5://127.0.0.1:42222
 // windows需要使用set替换export命令
-$ set http_proxy=socks5://127.0.0.1:42222
+// $ set http_proxy=socks5://127.0.0.1:42222
+// 不需要设置代理信息即可使用
 
 // 启动虚拟环境
 $ ./venv/Scripts/activate 
@@ -251,7 +252,6 @@ NAME                                        READY   STATUS    RESTARTS   AGE
 kt-connect-daemon-acbhz-6648c86848-t4kzr    1/1     Running   0          86m
 test-business-01-kt-tccwe-658f9c4b5-l8sdc   1/1     Running   0          32m
 test-business-02-58655d78c6-jhl7s           1/1     Running   0          5d6h
-
 
 ```
 

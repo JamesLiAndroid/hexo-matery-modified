@@ -102,6 +102,7 @@ xfs(RHEL7.2及更高版本)，需要启用d_type=true。
 4、配置国内公共镜像
 
  "registry-mirrors": [
+        "https://registry.cn-hangzhou.aliyuncs.com",
         "https://docker.mirrors.ustc.edu.cn",
         "https://registry.docker-cn.com"
     ],
@@ -110,6 +111,7 @@ xfs(RHEL7.2及更高版本)，需要启用d_type=true。
 
     {
         "registry-mirrors": [
+            "https://registry.cn-hangzhou.aliyuncs.com",
             "https://docker.mirrors.ustc.edu.cn",
             "https://registry.docker-cn.com"
         ],
@@ -128,6 +130,7 @@ xfs(RHEL7.2及更高版本)，需要启用d_type=true。
     // 输入以下内容
     {
     "registry-mirrors": [
+        "https://registry.cn-hangzhou.aliyuncs.com",
         "https://docker.mirrors.ustc.edu.cn",
         "https://registry.docker-cn.com"
     ],
@@ -521,7 +524,7 @@ ingress:
     WARN[0934] Failed to create Docker container [etcd-fix-perm] on host [192.168.238.239]: Error response from daemon: Conflict. The container name "/etcd-fix-perm" is already in use by container "3d0a7d0a9d12fb088eeda6a02c5f18c98a561149fadf9d4fa0b261b0f79273b5". You have to remove (or rename) that container to be able to reuse that name.
     FATA[0934] [etcd] Failed to bring up Etcd Plane: Failed to create [etcd-fix-perm] container on host [192.168.238.239]: Failed to create Docker container [etcd-fix-perm] on host [192.168.238.239]: <nil>
 
-只在239机器上执行清理脚本后，再转回到240机器，运行rke config --name cluster.yml。
+只在239机器上执行清理脚本后，再转回到240机器，运行rke config --config cluster.yml。
 
 3. 安装报错：
 

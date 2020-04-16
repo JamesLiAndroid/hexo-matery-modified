@@ -1,0 +1,3 @@
+1. 讲解基本概念，node、pod、service、对外访问（nodeport、ingress、loadbalancer）、deployment
+
+2. 讲解前端项目的部署，代表的含义
