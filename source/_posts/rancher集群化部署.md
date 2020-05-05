@@ -1298,7 +1298,7 @@ cluster-agent并不能进行通讯，看到443问题，猜想是证书出了问�
     Name:         cattle-cluster-agent-85f4fcb5db-pwlgh
     Namespace:    cattle-system
     Priority:     0
-    Node:         10.0.88.232/10.0.88.232
+    Node:         192.168.123.232/192.168.123.232
     Start Time:   Tue, 03 Mar 2020 14:58:49 +0800
     Labels:       app=cattle-cluster-agent
                 pod-template-hash=85f4fcb5db
@@ -1353,8 +1353,8 @@ cluster-agent并不能进行通讯，看到443问题，猜想是证书出了问�
     Events:
     Type     Reason   Age                    From                  Message
     ----     ------   ----                   ----                  -------
-    Warning  BackOff  3m4s (x444 over 147m)  kubelet, 10.0.88.232  Back-off restarting failed container
-    $ ssh -p 15555 centos@10.0.88.232
+    Warning  BackOff  3m4s (x444 over 147m)  kubelet, 192.168.123.232  Back-off restarting failed container
+    $ ssh -p 15555 centos@192.168.123.232
     Last login: Tue Mar  3 16:04:54 2020 from k8s-rke-node-start
     $ curl -k https://rancher.icpcloud.com/ping
     pong
@@ -1382,6 +1382,79 @@ cluster-agent并不能进行通讯，看到443问题，猜想是证书出了问�
 
 
 参考自：https://github.com/rancher/rancher/issues/16454#issuecomment-544621587
+
+三、关于kubernetes通过rke工具进行扩容的操作
+
+
+这里提前准备两台服务器，一台是192.168.123.233，另一台是192.168.123.234。登录192.168.123.240服务器，然后执行下命令：
+
+```
+// 转到部署文件所在的位置
+$ cd ~/cluster/new_rancher
+
+// 对配置文件进行备份
+$ cp cluster.yml cluster.yml.bak
+
+// 执行下更新功能
+$ rke --debug up --config cluster.yml --update-only
+
+```
+
+执行成功后，最终提示：Finished building Kubernetes cluster successfully，说明已经完成。
+
+随后修改cluster.yml文件，添加以下内容：
+
+```
+- address: 192.168.123.233
+  port: "15555"
+  internal_address: ""
+  role:
+  - worker
+  hostname_override: ""
+  user: centos
+  docker_socket: /var/run/docker.sock
+  ssh_key: ""
+  ssh_key_path: ~/.ssh/id_rsa
+  ssh_cert: ""
+  ssh_cert_path: ""
+  labels: {}
+  taints: []
+- address: 192.168.123.234
+  port: "15555"
+  internal_address: ""
+  role:
+  - worker
+  hostname_override: ""
+  user: centos
+  docker_socket: /var/run/docker.sock
+  ssh_key: ""
+  ssh_key_path: ~/.ssh/id_rsa
+  ssh_cert: ""
+  ssh_cert_path: ""
+  labels: {}
+  taints: []
+```
+
+追加在192.168.123.241的配置信息之后，修改完成后保存退出，重新执行下面的命令：
+
+```
+$ rke --debug up --config cluster.yml --update-only
+```
+
+最终提示：Finished building Kubernetes cluster successfully，说明已经完成。
+
+在一开始，不执行更新命令，直接修改cluster.yml，出现各种各样的问题，例如：
+
+```
+1. Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+
+2. docker: Error response from daemon: Conflict. The container name "rke-log-linker" is already in use
+
+3. 节点连接不上
+
+```
+
+所以一定使用这个操作顺序进行增加节点！
 
 ## 参考文章
 

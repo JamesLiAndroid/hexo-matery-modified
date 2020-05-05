@@ -129,7 +129,12 @@ yum
 
         // 5. 安装epel源---常用工具安装必备
         # yum install -y epel-release
+        
+        // 6. 安装sysstat---排查工具
+        # yum install -y sysstat
 
+        // 7. 安装httpd---添加压测命令ab
+        # yum install httpd-tools -y
 
 * 更新系统
 
@@ -760,6 +765,9 @@ yum
     // 开始安装mongodb
     $  sudo yum install -y mongodb-org
 
+    // 启动已经安装的mongo服务
+    $ sudo systemctl start mongod
+
     // 针对mongodb进行设置
     // 1. 进入mongodb的shell操作空间
     $ mongo
@@ -777,15 +785,18 @@ yum
 
     // 4. 退出，以管理员身份重新登录
     > quit()
-    $ mongo -u mongo-admin -p --authenticationDatabase admin
+    $ mongo -u admin -p --authenticationDatabase admin
     // 输入密码
-    // 5. 对需要操作的库进行授权
+
+    // 5. 使用指定的库
+    > use db001
+
+    // 6. 对需要操作的库进行授权
     > db.createUser({
             user:"user001",
             pwd:"123456",
             roles:[
                 {role:"readWrite",db:"db001"},
-                {role:"readWrite",db:"db002"},
                 'read'// 对其他数据库有只读权限，对db001、db002是读写权限
             ]
         })
@@ -964,6 +975,9 @@ Redis版本选择Redis 4.0以上版本，因为4.0以上版本可以支持官方
 
     // 配置启动级别
     # chkconfig --level 2345 redis on
+
+    // 使配置生效
+    # systemctl daemon-reload
 
     // 启动测试
     # systemctl start redis   #或者 /etc/init.d/redis start  
