@@ -209,11 +209,11 @@ yum install -y java-1.8.0-openjdk-devel
 
 改造后的服务启动命令如下：
 
-    ENTRYPOINT ["sh", "-c", "java -Djava.rmi.server.hostname=10.0.88.193 -Dcom.sun.management.jmxremote.port=10001 -Dcom.sun.management.jmxremote.rmi.port=10001 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -javaagent:/app/skywalking-agent/skywalking-agent.jar -Dskywalking.agent.namespace=${SKYWALKING_NAMESPACE} -Dskywalking.agent.service_name=${SKYWALKING_TARGET_SERVICE_NAME} -Dskywalking.collector.backend_service=${SKYWALKING_IP_PORT}  -Dspring.profiles.active=${CHANNEL} -Dspring.cloud.client.ip-address=${IP_ADDR} -Dnacos_ip=${NACOS_IP} -Dnacos_namespace=${NACOS_NAMESPACE} -jar icp-cloud-opt-visualmodel-0.0.1-SNAPSHOT.jar"]
+    ENTRYPOINT ["sh", "-c", "java -Djava.rmi.server.hostname=192.168.232.193 -Dcom.sun.management.jmxremote.port=10001 -Dcom.sun.management.jmxremote.rmi.port=10001 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -javaagent:/app/skywalking-agent/skywalking-agent.jar -Dskywalking.agent.namespace=${SKYWALKING_NAMESPACE} -Dskywalking.agent.service_name=${SKYWALKING_TARGET_SERVICE_NAME} -Dskywalking.collector.backend_service=${SKYWALKING_IP_PORT}  -Dspring.profiles.active=${CHANNEL} -Dspring.cloud.client.ip-address=${IP_ADDR} -Dnacos_ip=${NACOS_IP} -Dnacos_namespace=${NACOS_NAMESPACE} -jar icp-cloud-opt-visualmodel-0.0.1-SNAPSHOT.jar"]
 
 变化在于，设置了jmx的连接选项。解释如下：
 
-* -Djava.rmi.server.hostname=10.0.88.193          jmx服务器所在地址信息
+* -Djava.rmi.server.hostname=192.168.232.193          jmx服务器所在地址信息
 * -Dcom.sun.management.jmxremote.port=10001       jmx内部服务端口
 * -Dcom.sun.management.jmxremote.rmi.port=10001   jmx对外暴露的服务端口
 * -Dcom.sun.management.jmxremote.ssl=false        不使用ssl连接
@@ -223,7 +223,7 @@ yum install -y java-1.8.0-openjdk-devel
 
 针对docker的启动命令需要修改为下面的信息，设置端口进行对应。如下：
 
-    docker run -d --restart=on-failure:10 -p 20020:20020 -p 10001:10001 -e SKYWALKING_NAMESPACE="icp-cloud-test" -e SKYWALKING_TARGET_SERVICE_NAME="icp-cloud-visualmodel" -e SKYWALKING_IP_PORT="10.0.88.163:11800" -e CHANNEL="standalone" -e IP_ADDR="10.0.88.193"  -e NACOS_IP="10.0.88.194:18848" -e NACOS_NAMESPACE="aa853012-28dd-404a-a941-e4e36324f615" 10.0.88.159:5000/visualmodel-re:$BUILD_NUMBER
+    docker run -d --restart=on-failure:10 -p 20020:20020 -p 10001:10001 -e SKYWALKING_NAMESPACE="icp-cloud-test" -e SKYWALKING_TARGET_SERVICE_NAME="icp-cloud-visualmodel" -e SKYWALKING_IP_PORT="192.168.232.163:11800" -e CHANNEL="standalone" -e IP_ADDR="192.168.232.193"  -e NACOS_IP="192.168.232.194:18848" -e NACOS_NAMESPACE="aa853012-28dd-404a-a941-e4e36324f615" 192.168.232.159:5000/visualmodel-re:$BUILD_NUMBER
 
 主要是添加了“ -p 10001:10001 ”对应于该服务的jmx端口，设置对外暴露。
 
@@ -283,7 +283,7 @@ yum install -y java-1.8.0-openjdk-devel
 
 解决方式：针对产生僵尸进程的问题，通过设置ssh的超时时间解决。
 
-jenkins重启链接：http://10.0.88.159:9090/restart
+jenkins重启链接：http://192.168.232.159:9090/restart
 
 
 ### 番外：提到的jvm配置选项的含义

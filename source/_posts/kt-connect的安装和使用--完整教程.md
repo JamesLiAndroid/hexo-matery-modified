@@ -100,7 +100,7 @@ venv
 $ set KUBECONFIG=./kube_config_cluster.yml
 
 // 查看集群中某个namespace下的内容
-$ kubectl.exe get pod -n icp-cloud-test-business
+$ kubectl.exe get pod -n test-test-business
 NAME                                READY   STATUS    RESTARTS   AGE
 test-business-01-84cf9fcbb7-bcgs2   0/1     Running   285        25h
 test-business-02-58655d78c6-jhl7s   1/1     Running   0          5d1h
@@ -220,10 +220,10 @@ kt-connect demo from tomcat9
 
 ### 2. 测试服务线上启动
 
-首先连接到线上的namespace中，名称为icp-cloud-test-business。执行connect命令：
+首先连接到线上的namespace中，名称为test-test-business。执行connect命令：
 
 ```
-(venv) $ D:\dev\Java\ktctl_windows_amd64\ktctl_windows_amd64.exe --kubeconfig D:\dev\Java\ktctl_windows_amd64\kube_config_cluster.yml -n icp-cloud-test-business --d connect --method=socks5 --proxy 42222 --port 42333
+(venv) $ D:\dev\Java\ktctl_windows_amd64\ktctl_windows_amd64.exe --kubeconfig D:\dev\Java\ktctl_windows_amd64\kube_config_cluster.yml -n test-test-business --d connect --method=socks5 --proxy 42222 --port 42333
 
 ```
 
@@ -240,14 +240,14 @@ kt-connect demo from tomcat9
 $ ./venv/Scripts/activate 
 
 // 启动新的影子镜像替换旧的镜像
-(venv) $ ktct_windows_amd64.exe --kubeconfig D:\dev\Java\ktctl_windows_amd64\kube_config_cluster.yml --debug --namespace=icp-cloud-test-business exchange test-business-01 --expose 19030
+(venv) $ ktct_windows_amd64.exe --kubeconfig D:\dev\Java\ktctl_windows_amd64\kube_config_cluster.yml --debug --namespace=test-test-business exchange test-business-01 --expose 19030
 
 ```
 
 启动后，我们查看一下线上服务是否被替换，如下：
 
 ```
-$ kubectl get pod -n icp-cloud-test-business
+$ kubectl get pod -n test-test-business
 NAME                                        READY   STATUS    RESTARTS   AGE
 kt-connect-daemon-acbhz-6648c86848-t4kzr    1/1     Running   0          86m
 test-business-01-kt-tccwe-658f9c4b5-l8sdc   1/1     Running   0          32m
@@ -262,16 +262,16 @@ test-business01已经添加上了*kt-*标志，说明已经替换成我们自己
 由于nacos部署的是headless服务信息，所以无法使用nodePort模式进行访问。再考虑到我们这里使用的socks5的代理方式，最终只能使用clusterIP的方式进行连接。首先需要获取nacos中的clusterIP，如下：
 
 ```
-$ kubectl get svc -n icp-cloud-basic-nacos
+$ kubectl get svc -n test-basic-nacos
 NAME             TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
 mysql            ClusterIP   10.43.252.60   <none>        3306/TCP   18d
 nacos-headless   ClusterIP   None           <none>        8848/TCP   18d
-$ kubectl describe svc nacos-headless -n icp-cloud-basic-nacos
+$ kubectl describe svc nacos-headless -n test-basic-nacos
 Name:              nacos-headless
-Namespace:         icp-cloud-basic-nacos
+Namespace:         test-basic-nacos
 Labels:            app=nacos
 Annotations:       kubectl.kubernetes.io/last-applied-configuration:
-                     {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"nacos"},"name":"nacos-headless","namespace":"icp-cloud-b...
+                     {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"nacos"},"name":"nacos-headless","namespace":"test-b...
 Selector:          app=nacos
 Type:              ClusterIP
 IP:                None
@@ -291,13 +291,13 @@ Endpoints一栏表示了，当前的nacos对应的ip地址和端口信息，根�
 
 spring:
   application:
-    name: icp-cloud-business01
+    name: test-business01
   cloud:
     nacos:
       config:
         # 测试环境k8s使用
         server-addr: ${nacos_ip:10.42.1.15:8848}
-        namespace: ${nacos_namespace:icp-cloud-dev-local}
+        namespace: ${nacos_namespace:test-dev-local}
         # 开发环境使用
 #        server-addr: ${nacos_ip:192.168.88.161:18848}
 #        namespace: ${nacos_namespace:858b37b1-35be-4564-a24e-dc2c322d5784}
@@ -403,7 +403,7 @@ D:\dev\Java\jdk1.8.0_201\bin\java.exe -DsocksProxyHost=127.0.0.1 -DsocksProxyPor
 服务已经注册，192.168.88.193所示的服务就是我们自己线下启动的服务，这时候通过接口进行测试，完成一次查询的操作，看接口是否能连通，插入数据的时候，日志如下：
 
 ```
-2020-04-07 18:48:30.850  INFO [icp-cloud-business01,,,] 12464 --- [erListUpdater-0] c.netflix.config.ChainedDynamicProperty  : Flipping property: icp-cloud-business02.ribbon.ActiveConnectionsLimit to use NEXT property: niws.loadbalancer.availabilityFilteringRule.activeConnectionsLimit = 2147483647
+2020-04-07 18:48:30.850  INFO [test-business01,,,] 12464 --- [erListUpdater-0] c.netflix.config.ChainedDynamicProperty  : Flipping property: test-business02.ribbon.ActiveConnectionsLimit to use NEXT property: niws.loadbalancer.availabilityFilteringRule.activeConnectionsLimit = 2147483647
 Creating a new SqlSession
 SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@62210e0b] was not registered for synchronization because synchronization is not active
 JDBC Connection [com.alibaba.druid.proxy.jdbc.ConnectionProxyImpl@49a685f] will not be managed by Spring
@@ -425,14 +425,14 @@ Closing non transactional SqlSession [org.apache.ibatis.session.defaults.Default
 最后要终止调试，并恢复之前的服务，在启动影子镜像的命令行中，使用ctrl+c终止运行
 
 ```
-(venv) $ ktct_windows_amd64.exe --kubeconfig D:\dev\Java\ktctl_windows_amd64\kube_config_cluster.yml --debug --namespace=icp-cloud-test-business exchange test-business-01 --expose 19030
+(venv) $ ktct_windows_amd64.exe --kubeconfig D:\dev\Java\ktctl_windows_amd64\kube_config_cluster.yml --debug --namespace=test-test-business exchange test-business-01 --expose 19030
 
 ```
 
 上述命令行中的运行程序被终止，程序会退出并清理之前部署的镜像信息，查看镜像时，会发现测试镜像被替换，恢复原来的镜像信息，如下：
 
 ```
-$ kubectl get pod -n icp-cloud-test-business
+$ kubectl get pod -n test-test-business
 NAME                                         READY   STATUS              RESTARTS   AGE
 kt-connect-daemon-dbjpv-666fdf5c7d-f5n55     1/1     Running             0          21m
 test-business-01-67b4cd9d4c-smjfg            0/1     ContainerCreating   0          14s
@@ -440,7 +440,7 @@ test-business-01-67b4cd9d4c-smjfg            0/1     ContainerCreating   0      
 test-business-01-kt-jbizj-6cb8d9d898-w6rkw   1/1     Terminating         0          17m
 test-business-02-58655d78c6-jhl7s            1/1     Running             0          5d22h
 
-$ kubectl get pod -n icp-cloud-test-business
+$ kubectl get pod -n test-test-business
 NAME                                       READY   STATUS    RESTARTS   AGE
 kt-connect-daemon-dbjpv-666fdf5c7d-f5n55   1/1     Running   0          25m
 test-business-01-67b4cd9d4c-smjfg          0/1     Running   0          4m54s

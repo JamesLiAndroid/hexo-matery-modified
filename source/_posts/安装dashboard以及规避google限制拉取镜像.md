@@ -10,6 +10,7 @@ summary:
 tags:
 categories:
 ---
+
 # dashboard安装以及规避google限制拉取镜像
 
 ## 工具链

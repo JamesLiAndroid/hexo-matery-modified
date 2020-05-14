@@ -847,7 +847,7 @@ yum
 
     data:
         mongodb:
-            uri: mongodb://mongo_ex:123456@10.0.11.12:27017/icp-cloud-visualmodel  
+            uri: mongodb://mongo_ex:123456@10.0.11.12:27017/test-visualmodel  
 
 * MongoDB集群搭建
 

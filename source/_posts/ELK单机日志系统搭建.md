@@ -617,7 +617,7 @@ Elasticsearch安装X-Pack插件（后续补充）
 
 配置完成后，在服务的Controller中，添加**log.info("测试日志");**代码，以此进行测试。
 
-编写完成后，对服务所要部署的服务器部署[log-pilot](https://github.com/AliyunContainerService/log-pilot)工具，直接将日志信息写入ElasticSearch中。转到微服务集群所在的服务器10.0.88.179，执行命令如下：
+编写完成后，对服务所要部署的服务器部署[log-pilot](https://github.com/AliyunContainerService/log-pilot)工具，直接将日志信息写入ElasticSearch中。转到微服务集群所在的服务器192.168.232.179，执行命令如下：
         
         // 拉取logpilot镜像
         $ docker pull registry.cn-hangzhou.aliyuncs.com/acs/log-pilot:0.9.5-filebeat
