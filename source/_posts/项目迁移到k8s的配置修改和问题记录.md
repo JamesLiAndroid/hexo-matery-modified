@@ -46,7 +46,7 @@ mongo-outer.test-basic-mongo-outer:27017
 
 ## CI/CD的改造
 
-参考[CI-CD的改造](http://192.168.123.159:8181/icp-cloud/document/env-dev/blob/master/01.%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/k8s%E7%9B%B8%E5%85%B3%E6%96%87%E6%A1%A3/CI-CD%E7%9A%84%E6%94%B9%E9%80%A0.md)一文。
+参考[CI-CD的改造](http://192.168.123.159:8181/test/document/env-dev/blob/master/01.%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/k8s%E7%9B%B8%E5%85%B3%E6%96%87%E6%A1%A3/CI-CD%E7%9A%84%E6%94%B9%E9%80%A0.md)一文。
 
 ## 迁移问题
 

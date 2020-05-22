@@ -527,7 +527,7 @@ Elasticsearch安装X-Pack插件（后续补充）
                 -->
                 <property name="LOG_HOME" value="logs/" />
                 <property name="LOG_LEVEL" value="INFO" />
-                <property name="LOG_SERVICE_NAME" value="icp-cloud-data-dic" />
+                <property name="LOG_SERVICE_NAME" value="test-data-dic" />
                 <!--
                 控制台输出 ， 对应root标签中的ref引用信息
                 -->

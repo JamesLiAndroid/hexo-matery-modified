@@ -205,11 +205,11 @@ yum install -y java-1.8.0-openjdk-devel
 
 以业务建模为例子，改造其启动命令，添加jvm参数信息。原版的服务启动命令如下：
 
-    ENTRYPOINT ["sh", "-c", "java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -javaagent:/app/skywalking-agent/skywalking-agent.jar -Dskywalking.agent.namespace=${SKYWALKING_NAMESPACE} -Dskywalking.agent.service_name=${SKYWALKING_TARGET_SERVICE_NAME} -Dskywalking.collector.backend_service=${SKYWALKING_IP_PORT}  -Dspring.profiles.active=${CHANNEL} -Dspring.cloud.client.ip-address=${IP_ADDR} -Dnacos_ip=${NACOS_IP} -Dnacos_namespace=${NACOS_NAMESPACE} -jar icp-cloud-opt-visualmodel-0.0.1-SNAPSHOT.jar"]
+    ENTRYPOINT ["sh", "-c", "java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -javaagent:/app/skywalking-agent/skywalking-agent.jar -Dskywalking.agent.namespace=${SKYWALKING_NAMESPACE} -Dskywalking.agent.service_name=${SKYWALKING_TARGET_SERVICE_NAME} -Dskywalking.collector.backend_service=${SKYWALKING_IP_PORT}  -Dspring.profiles.active=${CHANNEL} -Dspring.cloud.client.ip-address=${IP_ADDR} -Dnacos_ip=${NACOS_IP} -Dnacos_namespace=${NACOS_NAMESPACE} -jar test-opt-visualmodel-0.0.1-SNAPSHOT.jar"]
 
 改造后的服务启动命令如下：
 
-    ENTRYPOINT ["sh", "-c", "java -Djava.rmi.server.hostname=192.168.232.193 -Dcom.sun.management.jmxremote.port=10001 -Dcom.sun.management.jmxremote.rmi.port=10001 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -javaagent:/app/skywalking-agent/skywalking-agent.jar -Dskywalking.agent.namespace=${SKYWALKING_NAMESPACE} -Dskywalking.agent.service_name=${SKYWALKING_TARGET_SERVICE_NAME} -Dskywalking.collector.backend_service=${SKYWALKING_IP_PORT}  -Dspring.profiles.active=${CHANNEL} -Dspring.cloud.client.ip-address=${IP_ADDR} -Dnacos_ip=${NACOS_IP} -Dnacos_namespace=${NACOS_NAMESPACE} -jar icp-cloud-opt-visualmodel-0.0.1-SNAPSHOT.jar"]
+    ENTRYPOINT ["sh", "-c", "java -Djava.rmi.server.hostname=192.168.232.193 -Dcom.sun.management.jmxremote.port=10001 -Dcom.sun.management.jmxremote.rmi.port=10001 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -javaagent:/app/skywalking-agent/skywalking-agent.jar -Dskywalking.agent.namespace=${SKYWALKING_NAMESPACE} -Dskywalking.agent.service_name=${SKYWALKING_TARGET_SERVICE_NAME} -Dskywalking.collector.backend_service=${SKYWALKING_IP_PORT}  -Dspring.profiles.active=${CHANNEL} -Dspring.cloud.client.ip-address=${IP_ADDR} -Dnacos_ip=${NACOS_IP} -Dnacos_namespace=${NACOS_NAMESPACE} -jar test-opt-visualmodel-0.0.1-SNAPSHOT.jar"]
 
 变化在于，设置了jmx的连接选项。解释如下：
 
@@ -223,7 +223,7 @@ yum install -y java-1.8.0-openjdk-devel
 
 针对docker的启动命令需要修改为下面的信息，设置端口进行对应。如下：
 
-    docker run -d --restart=on-failure:10 -p 20020:20020 -p 10001:10001 -e SKYWALKING_NAMESPACE="icp-cloud-test" -e SKYWALKING_TARGET_SERVICE_NAME="icp-cloud-visualmodel" -e SKYWALKING_IP_PORT="192.168.232.163:11800" -e CHANNEL="standalone" -e IP_ADDR="192.168.232.193"  -e NACOS_IP="192.168.232.194:18848" -e NACOS_NAMESPACE="aa853012-28dd-404a-a941-e4e36324f615" 192.168.232.159:5000/visualmodel-re:$BUILD_NUMBER
+    docker run -d --restart=on-failure:10 -p 20020:20020 -p 10001:10001 -e SKYWALKING_NAMESPACE="test-test" -e SKYWALKING_TARGET_SERVICE_NAME="test-visualmodel" -e SKYWALKING_IP_PORT="192.168.232.163:11800" -e CHANNEL="standalone" -e IP_ADDR="192.168.232.193"  -e NACOS_IP="192.168.232.194:18848" -e NACOS_NAMESPACE="aa853012-28dd-404a-a941-e4e36324f615" 192.168.232.159:5000/visualmodel-re:$BUILD_NUMBER
 
 主要是添加了“ -p 10001:10001 ”对应于该服务的jmx端口，设置对外暴露。
 
@@ -253,7 +253,7 @@ yum install -y java-1.8.0-openjdk-devel
 
 1. 针对docker镜像中的启动命令，添加**-XX:MaxRAMPercentage=85.0 -XX:MaxRAM=1000m*选项，启动命令变为
 
-    java -XX:MaxRAMPercentage=85.0 -XX:MaxRAM=1000m -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -javaagent:/app/skywalking-agent/skywalking-agent.jar -Dskywalking.agent.namespace=${SKYWALKING_NAMESPACE} -Dskywalking.agent.service_name=${SKYWALKING_TARGET_SERVICE_NAME} -Dskywalking.collector.backend_service=${SKYWALKING_IP_PORT}  -Dspring.profiles.active=${CHANNEL} -Dspring.cloud.client.ip-address=${IP_ADDR} -Dnacos_ip=${NACOS_IP} -Dnacos_namespace=${NACOS_NAMESPACE} -jar icp-cloud-opt-visualmodel-0.0.1-SNAPSHOT.jar"
+    java -XX:MaxRAMPercentage=85.0 -XX:MaxRAM=1000m -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -javaagent:/app/skywalking-agent/skywalking-agent.jar -Dskywalking.agent.namespace=${SKYWALKING_NAMESPACE} -Dskywalking.agent.service_name=${SKYWALKING_TARGET_SERVICE_NAME} -Dskywalking.collector.backend_service=${SKYWALKING_IP_PORT}  -Dspring.profiles.active=${CHANNEL} -Dspring.cloud.client.ip-address=${IP_ADDR} -Dnacos_ip=${NACOS_IP} -Dnacos_namespace=${NACOS_NAMESPACE} -jar test-opt-visualmodel-0.0.1-SNAPSHOT.jar"
 
 表示将该镜像的最大内存占用限制在1000m，留有85%的内存给该微服务运行使用。设置后效果如下：
 
@@ -275,7 +275,7 @@ yum install -y java-1.8.0-openjdk-devel
 
 脚本方式删除：
 
-    job = Jenkins.instance.getItemByFullName("icp-cloud-visualmodel-peer0")
+    job = Jenkins.instance.getItemByFullName("test-visualmodel-peer0")
 
     buildNum = job.getBuildByNumber(68)
 
