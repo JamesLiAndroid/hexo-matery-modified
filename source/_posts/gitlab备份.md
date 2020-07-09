@@ -110,6 +110,10 @@ categories: DevOps
         // 检查关闭状态
         root@10:/# gitlab-ctl status
 
+        // 所属用户组转换
+        // 不做转换容易导致权限问题，无法进行备份
+        root@10:/# chown git.root /var/opt/gitlab/backups/1579400282_2020_01_19_12.2.5_gitlab_backup.tar
+
         // 开始进行数据恢复
         root@10:/# gitlab-rake gitlab:backup:restore BACKUP=1579400282_2020_01_19_12.2.5
 

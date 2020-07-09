@@ -331,6 +331,8 @@ xfs(RHEL7.2及更高版本)，需要启用d_type=true。
 
     $ helm repo add  stable     http://mirror.azure.cn/kubernetes/charts-incubator/
 
+    $ helm repo add  rancher-stable    http://releases.rancher.com/server-charts/stable
+
     $ helm repo update
 
 ### 三、利用rke安装k8s
@@ -524,7 +526,7 @@ ingress:
     WARN[0934] Failed to create Docker container [etcd-fix-perm] on host [192.168.238.239]: Error response from daemon: Conflict. The container name "/etcd-fix-perm" is already in use by container "3d0a7d0a9d12fb088eeda6a02c5f18c98a561149fadf9d4fa0b261b0f79273b5". You have to remove (or rename) that container to be able to reuse that name.
     FATA[0934] [etcd] Failed to bring up Etcd Plane: Failed to create [etcd-fix-perm] container on host [192.168.238.239]: Failed to create Docker container [etcd-fix-perm] on host [192.168.238.239]: <nil>
 
-只在239机器上执行清理脚本后，再转回到240机器，运行rke config --config cluster.yml。
+只在239机器上执行清理脚本后，再转回到240机器，运行rke up --config cluster.yml。
 
 3. 安装报错：
 
@@ -536,7 +538,7 @@ ingress:
     
     docker network create --driver=bridge --subnet=10.43.0.0/16 br0_rke
 
-如果不创建也可以，重新执行rke config --name cluster.yml命令。
+如果不创建也可以，重新执行rke up --name cluster.yml命令。
 
 4. 安装报错
 
@@ -951,7 +953,7 @@ cluster-agent并不能进行通讯，看到443问题，猜想是证书出了问�
 
 目前怀疑是证书的问题，现在通过重新签发证书，再进行操作。
 
-**解决方案：** 
+**解决方案：**
 
 1. 重新签发证书  
 
@@ -965,7 +967,7 @@ cluster-agent并不能进行通讯，看到443问题，猜想是证书出了问�
     ca-key.pem    ca.pem     ca.srl    cert.pem    key.csr    key.pem     openssl.cnf    secret.yaml
 
     // 证书变更
-    $ cp ca.crt cacert.pem
+    $ cp ca.pem cacert.pem
 
 证书生成后，需要使用的是cacert.pem、cert.pem和key.pem这三个证书。
 

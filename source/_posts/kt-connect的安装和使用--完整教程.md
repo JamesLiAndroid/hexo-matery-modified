@@ -463,3 +463,8 @@ test-business-02-58655d78c6-jhl7s          1/1     Running   0          5d22h
 * windows支持：https://alibaba.github.io/kt-connect/#/zh-cn/guide/windows-support
 
 * 快速开始，测试镜像：https://alibaba.github.io/kt-connect/#/zh-cn/quickstart
+
+
+## 问题
+
+1. 多人同时调试一个服务的时候，上线多个相同服务，如何进行调试？如何对流量进行控制？

@@ -39,6 +39,16 @@ categories: DevOps
 
     4. 文中所有的服务器ip均为假ip信息，需要根据自己的需要进行更换。
 
+### 0.0 查看基础配置信息
+
+* cpu查看
+
+* 内存查看 
+
+* 硬盘查看
+
+* 系统信息获取
+
 ### 0. 网络配置
 
 * 设置公网ip或者是内网可访问的地址
@@ -177,12 +187,13 @@ yum
         # yum install -y telnet 
 
         // 8. 安装pstree工具集
+        // psmisc包含三个帮助管理/proc目录的程序。
+        // fuser 显示使用指定文件或者文件系统的进程的PID。
+        // killall 杀死某个名字的进程，它向运行指定命令的所有进程发出信号。
+        // pstree 树型显示当前运行的进程。
         # yum install -y psmisc
 
-        // 9. 安装sysstat工具集，包括iostat这样的命令
-        # yum install -y sysstat
-
-        // 10. 安装更直观的htop来替代top命令
+        // 9. 安装更直观的htop来替代top命令
         # yum install -y htop
 
     注意：“-y”代表同意安装该程序，无需在安装时确定
@@ -426,7 +437,7 @@ yum
 
 建议使用 **nice** 命令或者**renice**命令将 sshd 进程的优先级调高，这样当系统内存紧张时，还能勉强登陆服务器进行调试，然后分析故障。操作如下：
 
-    // 找到该进程信息
+    // 找到该进程信息，注意查找真正的进程，根据/usr/sbin/sshd -D获取
     $ ps -aux | grep sshd
     // 展示下面的信息
     root      2567  0.0  0.0 158936  5684 ?        Ss   08:34   0:00 sshd: centos [priv]
@@ -445,6 +456,7 @@ yum
     23773   0 sshd
 
     // 修改第一个进程的id信息，将优先级提升到最高
+    // 修改的是/usr/sbin/sshd -D启动命令所在的进程
     $ sudo renice -20 -p 23773
 
     // 查看进程优先级
@@ -504,7 +516,7 @@ yum
             // 创建安装目录
             $ sudo mkdir /usr/local/java/
             // 将解压后的文件夹拷贝到安装目录
-            $ sudo cp -r jdk-8u202-linux-x64/ /usr/local/java/
+            $ sudo cp -r jdk1.8.0_202/ /usr/local/java/
 
         第四步，开始配置环境变量，用vim打开/etc/profile，进行设置
 
@@ -512,7 +524,7 @@ yum
 
             // 在文档末尾添加
             # JAVA env
-            JAVA_HOME=/usr/java/jdk1.8.0_202
+            JAVA_HOME=/usr/local/java/
             JRE_HOME=$JAVA_HOME/jre
             CLASS_PATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib
             PATH=$PATH:$JAVA_HOME/bin:$JRE_HOME/bin
@@ -525,6 +537,7 @@ yum
 
             // 添加软链接
             $ sudo ln -s /usr/local/java/jdk1.8.0_202/bin/java /usr/bin/java
+            $ sudo ln -s /usr/local/java/jdk1.8.0_202/bin/javac /usr/bin/javac
         
         这样OracleJDK就安装完成了，可以执行以下命令进行检查。
 
@@ -572,8 +585,6 @@ yum
 
         // 安装最新的稳定版本的docker或者安装指定版本的docker，执行一条命令即可
         # yum install -y docker-ce
-        // 或者执行下面的命令
-        # yum install -y docker-ce-19.03.6
 
         // 配置docker服务以及设置开机启动
         # systemctl start docker
@@ -767,6 +778,7 @@ yum
 
     // 启动已经安装的mongo服务
     $ sudo systemctl start mongod
+    $ sudo systemctl enable mongod
 
     // 针对mongodb进行设置
     // 1. 进入mongodb的shell操作空间
@@ -1248,6 +1260,109 @@ confluence：10.0.11.12.46004
         * confluence文档：https://www.cwiki.us/pages/viewpage.action?pageId=917513
         
         * jira文档：https://www.cwiki.us/pages/viewpage.action?pageId=2393502
+
+## 关于服务器内核自动升级问题的解决
+
+由于部分机器进行了
+
+```
+sudo yum update
+
+```
+操作，导致内核信息进行了升级，导致有一些机器在启动的时候出现了黑屏和无法启动的情况。
+
+由于在启动时，默认选择了新升级的内核进行了启动，导致报错。如下：
+
+![](新内核启动报错.png)
+
+目前可用的稳定版内核为：3.10.0-1062.12.1.el7.x86_64，或者低于该版本的内核信息。
+
+以10.0.66.221机器为例进行查看和修改，首先登陆10.0.66.221，查看已安装的内核信息：
+
+```
+$ sudo rpm -qa |grep kernel
+kernel-tools-libs-3.10.0-1127.10.1.el7.x86_64
+kernel-tools-3.10.0-1127.10.1.el7.x86_64
+abrt-addon-kerneloops-2.1.11-57.el7.centos.x86_64
+kernel-3.10.0-1127.10.1.el7.x86_64
+kernel-3.10.0-862.el7.x86_64
+kernel-3.10.0-1062.12.1.el7.x86_64
+
+$ sudo rpm -e kernel.x86_64
+error: "kernel.x86_64" specifies multiple packages:
+  kernel-3.10.0-862.el7.x86_64
+  kernel-3.10.0-1062.12.1.el7.x86_64
+  kernel-3.10.0-1127.10.1.el7.x86_64
+
+```
+
+然后查看系统可用内核，查看启动时可选择的内核信息：
+
+```
+$ sudo cat /boot/grub2/grub.cfg |grep menuentry
+if [ x"${feature_menuentry_id}" = xy ]; then
+  menuentry_id_option="--id"
+  menuentry_id_option=""
+export menuentry_id_option
+menuentry 'CentOS Linux (3.10.0-1127.10.1.el7.x86_64) 7 (Core)' --class centos --class gnu-linux --class gnu --class os --unrestricted $menuentry_id_option 'gnulinux-3.10.0-862.el7.x86_64-advanced-f67e74a9-a85f-48b9-b521-32bdb355ab80' {
+menuentry 'CentOS Linux (3.10.0-1062.12.1.el7.x86_64) 7 (Core)' --class centos --class gnu-linux --class gnu --class os --unrestricted $menuentry_id_option 'gnulinux-3.10.0-862.el7.x86_64-advanced-f67e74a9-a85f-48b9-b521-32bdb355ab80' {
+menuentry 'CentOS Linux (3.10.0-862.el7.x86_64) 7 (Core)' --class centos --class gnu-linux --class gnu --class os --unrestricted $menuentry_id_option 'gnulinux-3.10.0-862.el7.x86_64-advanced-f67e74a9-a85f-48b9-b521-32bdb355ab80' {
+menuentry 'CentOS Linux (0-rescue-ffe45569e61149c0a79c77c7b38c8e33) 7 (Core)' --class centos --class gnu-linux --class gnu --class os --unrestricted $menuentry_id_option 'gnulinux-0-rescue-ffe45569e61149c0a79c77c7b38c8e33-advanced-f67e74a9-a85f-48b9-b521-32bdb355ab80' {
+
+```
+
+下一步查看当前内核信息：
+
+```
+$ uname -a
+Linux dev-k8s-node01 3.10.0-1127.10.1.el7.x86_64 #1 SMP Wed Jun 3 14:28:03 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
+
+```
+
+目前默认的就是这个3.10.0-1127的内核进行启动的，可能会存在问题，这时候需要修改开机时的默认使用的内核。
+
+```
+$ sudo grub2-set-default  'CentOS Linux (3.10.0-1062.12.1.el7.x86_64) 7 (Core)'
+
+$ sudo grub2-editenv list
+saved_entry=CentOS Linux (3.10.0-1062.12.1.el7.x86_64) 7 (Core)
+```
+
+修改完成后，进行如下操作：
+
+1. 删除存在启动问题内核
+
+```
+$ sudo rpm -qa | grep kernel
+kernel-tools-libs-3.10.0-1127.10.1.el7.x86_64
+kernel-tools-3.10.0-1127.10.1.el7.x86_64
+abrt-addon-kerneloops-2.1.11-57.el7.centos.x86_64
+kernel-3.10.0-1127.10.1.el7.x86_64
+kernel-3.10.0-862.el7.x86_64
+kernel-3.10.0-1062.12.1.el7.x86_64
+
+$ sudo yum remove kernel-3.10.0-1127.10.1.el7.x86_64
+Loaded plugins: fastestmirror, langpacks, versionlock
+Skipping the running kernel: kernel-3.10.0-1127.10.1.el7.x86_64
+No Packages marked for removal 
+
+```
+
+删除内核时出现上述错误，是因为当前内核正在使用，需要机器进行重启后才能删除。
+
+2. 禁用内核自动更新
+
+```
+// 复制保留原来的配置文件
+$ sudo cp /etc/yum.conf /etc/yum.conf.bak
+
+$ sudo vim /etc/yum.conf
+// 在[main]的最后添加 exclude=kernel*
+exclude=kernel*
+
+// :wq保存退出
+
+```
 
 ## 注意事项
 
