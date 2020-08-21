@@ -606,6 +606,8 @@ yum
         // 否则可能在执行docker pull命令的时候报错：Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Post http://%2Fvar%2Frun%2Fdocker.sock/v1.40/images/create?fromImage=hello-world&tag=latest: dial unix /var/run/docker.sock: connect: permission denied
         # reboot
 
+        // 这时候也可以尝试，退出ssh，重新使用ssh登录服务器
+
         // 如果不重启服务器，可以执行下面的命令解决
         $ sudo setfacl --modify user:centos:rw /var/run/docker.sock
 
