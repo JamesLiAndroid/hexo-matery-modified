@@ -11,8 +11,6 @@ tags:
 categories:
 ---
 
-# 关于ElasticSearch的数据清理以及日志清理
-
 ## 前言
 
 在服务日常的运行中，ELK日志体系出现了大量的日志文件占据硬盘空间的问题，以及存在ES中数据过多，导致索引和查询的速度变慢的情况。急切需要定期清理的策略！
@@ -207,4 +205,3 @@ appender.rolling.strategy.action.condition.nested_condition.exceeds = 3D
 
 * 清理脚本编写：https://blog.csdn.net/felix_yujing/article/details/78207667
 * 关于ELK的运行日志设置：https://blog.51cto.com/huanghai/2430038
-
