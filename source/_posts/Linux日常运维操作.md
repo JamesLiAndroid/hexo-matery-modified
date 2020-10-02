@@ -107,8 +107,11 @@ categories: DevOps
         nameserver 114.114.114.114 // (电信的DNS)
 
         nameserver 8.8.8.8 //（googel的DNS）
-yum 
+ 
         nameserver 1.1.1.1
+    
+        nameserver 223.5.5.5 // 阿里的公共DNS
+        nameserver 223.6.6.6
 
         // :wq保存文件
 
@@ -195,6 +198,12 @@ yum
 
         // 9. 安装更直观的htop来替代top命令
         # yum install -y htop
+
+        // 10. 安装sshpass用于shell脚本中传递密码信息
+        # yum install -y sshpass
+
+        // 11. 安装tree实现文件夹下批量展示
+        # yum install -y tree
 
     注意：“-y”代表同意安装该程序，无需在安装时确定
 
@@ -299,7 +308,7 @@ yum
         // 10. 启用firewalld服务
         # systemctl start firewalld
 
-### 5. ftp服务设置
+### 5. ftp服务设置（可选）
 
         // 使用yum安装vsftpd
         # yum install -y vsftpd 
@@ -578,7 +587,7 @@ yum
         // 添加repo信息
         # yum-config-manager \
                 --add-repo \
-                https://download.docker.com/linux/centos/docker-ce.repo
+                https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 
         // 更新软件源缓存
         # yum makecache fast
@@ -600,6 +609,7 @@ yum
 
         $ sudo groupadd docker
         $ sudo usermod -aG docker ${USER}
+        (或者执行 sudo gpasswd -a ${USER} docker)
         $ sudo systemctl restart docker
 
         // 建议这时候退出重新登录下，断开ssh连接或者重启下服务器
@@ -610,6 +620,8 @@ yum
 
         // 如果不重启服务器，可以执行下面的命令解决
         $ sudo setfacl --modify user:centos:rw /var/run/docker.sock
+        // 更新用户组
+        $ newgrp docker
 
     这样docker就全部安装完成了。可以在用户centos环境下，测试
 
@@ -740,9 +752,23 @@ yum
 
     mysql> flush privileges;
 
-    * MyCat安装以及高可用
+3. 错误信息：ERROR 1820 (HY000): You must reset your password using ALTER USER statement before executing this statement.
 
-    * MongoDB安装
+首先登录MySQL，然后进行修改密码的操作，常见于第一次登录的时候，如下：
+
+```
+$ mysql -u root -p 
+Enter password:
+
+mysql>  alter user 'root'@'localhost' identified by 'jy@MySQL246';
+
+mysql>  flush privileges;
+
+```
+
+* MyCat安装以及高可用
+
+* MongoDB安装
         
 通过docker的方式来安装MongoDB测试服务器，版本为3.4。操作如下:
 
