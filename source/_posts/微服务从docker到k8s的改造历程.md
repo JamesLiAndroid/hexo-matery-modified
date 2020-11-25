@@ -310,7 +310,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     serviceUrl:
-      defaultZone: http://hoteam:hoteam2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://hoteam:hoteam2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://hoteam:hoteam2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
+      defaultZone: http://test:test2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://test:test2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://test:test2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
   server:
     enable-self-preservation: false      
 server:
@@ -370,7 +370,7 @@ server:
 eureka:
   client:
     service-url:
-      defaultZone: http://hoteam:hoteam2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://hoteam:hoteam2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://hoteam:hoteam2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
+      defaultZone: http://test:test2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://test:test2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://test:test2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
 
 ```
 
@@ -1032,9 +1032,9 @@ spring.application.name=test-id-generator
 server.port=8080
 eureka.instance.prefer-ip-address=true
 eureka.instance.instance-id=${spring.application.name}@${spring.cloud.client.ip-address}:${server.port}
-eureka.client.service-url.defaultZone=http://hoteam:hoteam2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://hoteam:hoteam2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://hoteam:hoteam2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
+eureka.client.service-url.defaultZone=http://test:test2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://test:test2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://test:test2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
 eureka.instance.ipAddress=${spring.cloud.client.ip-address}
-#eureka.client.service-url.defaultZone=http://hoteam:hoteam2019@192.168.123.93.153:19011/eureka/
+#eureka.client.service-url.defaultZone=http://test:test2019@192.168.123.93.153:19011/eureka/
 
 # 2. Feign中的Ribbon配置
 # 让 Hystrix 的超时时间大于 Ribbon 的超时时间，否则 Hystrix 命令超时后，该命令直接熔断，重试机制就没有任何意义了。

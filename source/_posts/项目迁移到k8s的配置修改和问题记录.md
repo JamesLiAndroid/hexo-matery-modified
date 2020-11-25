@@ -25,7 +25,7 @@ http://nacos-0.nacos-headless.test-basic-nacos.svc.cluster.local:8848,http://nac
 
 2. eureka的连接地址，统一修改为以下链接：
 
-http://hoteam:hoteam2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://hoteam:hoteam2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://hoteam:hoteam2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
+http://test:test2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://test:test2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,http://test:test2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
 
 3. mysql的连接信息，示例：
 

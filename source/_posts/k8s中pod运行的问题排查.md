@@ -61,7 +61,7 @@ INFO 2020-06-10 13:45:53:366 main SnifferConfigInitializer : Config file found i
 2020-06-10 13:46:26.969  INFO [test-form-rdp,,,] 6 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.security.config.annotation.method.configuration.Jsr250MetadataSourceConfiguration' of type [org.springframework.security.config.annotation.method.configuration.Jsr250MetadataSourceConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
 2020-06-10 13:46:26.974  INFO [test-form-rdp,,,] 6 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'jsr250MethodSecurityMetadataSource' of type [org.springframework.security.access.annotation.Jsr250MethodSecurityMetadataSource] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
 2020-06-10 13:46:26.980  INFO [test-form-rdp,,,] 6 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'methodSecurityMetadataSource' of type [org.springframework.security.access.method.DelegatingMethodSecurityMetadataSource] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
-2020-06-10 13:46:27.028  INFO [test-form-rdp,,,] 6 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'redisCacheConfig' of type [com.hoteamsoft.icpcloud.common.cache.config.RedisCacheConfig$$EnhancerBySpringCGLIB$$c422b7ae] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-06-10 13:46:27.028  INFO [test-form-rdp,,,] 6 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'redisCacheConfig' of type [com.testsoft.icpcloud.common.cache.config.RedisCacheConfig$$EnhancerBySpringCGLIB$$c422b7ae] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
 2020-06-10 13:46:27.390  INFO [test-form-rdp,,,] 6 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.cloud.sleuth.instrument.web.client.TraceWebClientAutoConfiguration$TraceOAuthConfiguration' of type [org.springframework.cloud.sleuth.instrument.web.client.TraceWebClientAutoConfiguration$TraceOAuthConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
 2020-06-10 13:46:27.475  INFO [test-form-rdp,,,] 6 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'spring.sleuth.redis-org.springframework.cloud.sleuth.instrument.redis.TraceRedisProperties' of type [org.springframework.cloud.sleuth.instrument.redis.TraceRedisProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
 2020-06-10 13:46:28.918  INFO [test-form-rdp,,,] 6 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 20041 (testtp)
@@ -113,11 +113,11 @@ Using generated security password: 6595127a-b2c1-4947-9f73-c17b7a2c7002
 2020-06-10 13:46:58.197  INFO [test-form-rdp,,,] 6 --- [           main] com.netflix.discovery.DiscoveryClient    : Starting heartbeat executor: renew interval is: 30
 2020-06-10 13:46:58.201  INFO [test-form-rdp,,,] 6 --- [           main] c.n.discovery.InstanceInfoReplicator     : InstanceInfoReplicator onDemand update allowed rate per min is 4
 2020-06-10 13:46:58.215  INFO [test-form-rdp,,,] 6 --- [           main] com.netflix.discovery.DiscoveryClient    : Discovery Client initialized at timestamp 1591768018207 with initial instances count: 17
-2020-06-10 13:46:58.239  INFO [test-form-rdp,,,] 6 --- [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application ICP-CLOUD-FORM-RDP with eureka with status UP
+2020-06-10 13:46:58.239  INFO [test-form-rdp,,,] 6 --- [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application test-FORM-RDP with eureka with status UP
 2020-06-10 13:46:58.242  INFO [test-form-rdp,,,] 6 --- [           main] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1591768018242, current=UP, previous=STARTING]
 2020-06-10 13:46:58.247  INFO [test-form-rdp,,,] 6 --- [           main] d.s.w.p.DocumentationPluginsBootstrapper : Context refreshed
-2020-06-10 13:46:58.284  INFO [test-form-rdp,,,] 6 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ICP-CLOUD-FORM-RDP/test-form-rdp@10.42.3.29:20041: registering service...
-2020-06-10 13:46:58.493  INFO [test-form-rdp,,,] 6 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ICP-CLOUD-FORM-RDP/test-form-rdp@10.42.3.29:20041 - registration status: 204
+2020-06-10 13:46:58.284  INFO [test-form-rdp,,,] 6 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_test-FORM-RDP/test-form-rdp@10.42.3.29:20041: registering service...
+2020-06-10 13:46:58.493  INFO [test-form-rdp,,,] 6 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_test-FORM-RDP/test-form-rdp@10.42.3.29:20041 - registration status: 204
 2020-06-10 13:46:58.593  INFO [test-form-rdp,,,] 6 --- [           main] d.s.w.p.DocumentationPluginsBootstrapper : Found 1 custom documentation plugin(s)
 2020-06-10 13:46:58.794  INFO [test-form-rdp,,,] 6 --- [           main] s.d.s.w.s.ApiListingReferenceScanner     : Scanning for api listing references
 2020-06-10 13:46:59.984  INFO [test-form-rdp,,,] 6 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 20041 (testtp) with context path ''
@@ -134,16 +134,16 @@ Using generated security password: 6595127a-b2c1-4947-9f73-c17b7a2c7002
 2020-06-10 13:47:59.246  INFO [test-form-rdp,,,] 6 --- [cd-92cc24bcaf4e] c.a.n.client.config.impl.ClientWorker    : get changedGroupKeys:[]
 2020-06-10 13:48:28.750  INFO [test-form-rdp,,,] 6 --- [cd-92cc24bcaf4e] c.a.n.client.config.impl.ClientWorker    : get changedGroupKeys:[]
 2020-06-10 13:48:58.254  INFO [test-form-rdp,,,] 6 --- [cd-92cc24bcaf4e] c.a.n.client.config.impl.ClientWorker    : get changedGroupKeys:[]
-2020-06-10 13:49:15.018  INFO [test-form-rdp,,,] 6 --- [extShutdownHook] o.s.c.n.e.s.EurekaServiceRegistry        : Unregistering application ICP-CLOUD-FORM-RDP with eureka with status DOWN
+2020-06-10 13:49:15.018  INFO [test-form-rdp,,,] 6 --- [extShutdownHook] o.s.c.n.e.s.EurekaServiceRegistry        : Unregistering application test-FORM-RDP with eureka with status DOWN
 2020-06-10 13:49:15.019  WARN [test-form-rdp,,,] 6 --- [extShutdownHook] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1591768155018, current=DOWN, previous=UP]
-2020-06-10 13:49:15.020  INFO [test-form-rdp,,,] 6 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ICP-CLOUD-FORM-RDP/test-form-rdp@10.42.3.29:20041: registering service...
-2020-06-10 13:49:15.027  INFO [test-form-rdp,,,] 6 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ICP-CLOUD-FORM-RDP/test-form-rdp@10.42.3.29:20041 - registration status: 204
+2020-06-10 13:49:15.020  INFO [test-form-rdp,,,] 6 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_test-FORM-RDP/test-form-rdp@10.42.3.29:20041: registering service...
+2020-06-10 13:49:15.027  INFO [test-form-rdp,,,] 6 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_test-FORM-RDP/test-form-rdp@10.42.3.29:20041 - registration status: 204
 2020-06-10 13:49:15.055  INFO [test-form-rdp,,,] 6 --- [extShutdownHook] o.s.s.concurrent.ThreadPoolTaskExecutor  : Shutting down ExecutorService 'applicationTaskExecutor'
 2020-06-10 13:49:15.198  INFO [test-form-rdp,,,] 6 --- [extShutdownHook] com.alibaba.druid.pool.DruidDataSource   : {dataSource-1} closing ...
 2020-06-10 13:49:15.232  INFO [test-form-rdp,,,] 6 --- [extShutdownHook] com.alibaba.druid.pool.DruidDataSource   : {dataSource-1} closed
 2020-06-10 13:49:15.239  INFO [test-form-rdp,,,] 6 --- [extShutdownHook] com.netflix.discovery.DiscoveryClient    : Shutting down DiscoveryClient ...
 2020-06-10 13:49:18.241  INFO [test-form-rdp,,,] 6 --- [extShutdownHook] com.netflix.discovery.DiscoveryClient    : Unregistering ...
-2020-06-10 13:49:18.253  INFO [test-form-rdp,,,] 6 --- [extShutdownHook] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ICP-CLOUD-FORM-RDP/test-form-rdp@10.42.3.29:20041 - deregister  status: 200
+2020-06-10 13:49:18.253  INFO [test-form-rdp,,,] 6 --- [extShutdownHook] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_test-FORM-RDP/test-form-rdp@10.42.3.29:20041 - deregister  status: 200
 2020-06-10 13:49:18.274  INFO [test-form-rdp,,,] 6 --- [extShutdownHook] com.netflix.discovery.DiscoveryClient    : Completed shut down of DiscoveryClient
 
 ```
@@ -245,8 +245,8 @@ eureka:
     ipAddress: ${spring.cloud.client.ip-address}
   client:
     service-url:
-      defaultZone: testtp://hoteam:hoteam2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,testtp://hoteam:hoteam2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,testtp://hoteam:hoteam2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
-      #defaultZone: testtp://hoteam:hoteam2019@127.0.0.1:19011/eureka/
+      defaultZone: testtp://test:test2019@eureka-0.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,testtp://test:test2019@eureka-1.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/,testtp://test:test2019@eureka-2.eureka.test-basic-eureka.svc.cluster.local:19011/eureka/
+      #defaultZone: testtp://test:test2019@127.0.0.1:19011/eureka/
 swagger:
   enable: true
 
@@ -257,7 +257,7 @@ security:
   oauth2:
     client:
       client-id: test-form-rdp 
-      client-secret: test-form-rdp@hoteamdev 
+      client-secret: test-form-rdp@testdev 
       access-token-uri: ${auth-server}/oauth/token 
       user-authorization-uri: ${auth-server}/oauth/authorize 
     resource:

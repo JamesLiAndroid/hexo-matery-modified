@@ -182,7 +182,9 @@ pipeline {
 编写完成后，需要修改Dockerfile-opt（专门为docker内构建前端项目创建）以及k8s文件，最终如下。
 
 1. Dockerfile-opt文件：
-```
+
+```bash
+
 # 第一层面构建，打包前端代码
 #### 1. 指定node镜像版本
 FROM node:10.16.0 AS builder
@@ -224,7 +226,7 @@ RUN yarn config set disturl https://npm.taobao.org/dist
 # 4. 添加package.json
 COPY package.json /home/node/app/
 # 5. 安装依赖，如果package.json未变更，将会沿用之前的镜像缓存
-#RUN NPM_USER=npm-user NPM_PASS=hoteam@2019 NPM_EMAIL=lisongyang@hoteamsoft.com NPM_REGISTRY=http://10.0.88.159:8081/repository/npm-group/ npm-cli-adduser 
+#RUN NPM_USER=npm-user NPM_PASS=test@2019 NPM_EMAIL=lisongyang@testsoft.com NPM_REGISTRY=http://10.0.88.159:8081/repository/npm-group/ npm-cli-adduser 
 
 # 查看自身信息
 # RUN npm whoami
@@ -250,7 +252,8 @@ ENTRYPOINT ["nginx","-g","daemon off;"]
 
 2. k8s部署文件：
 
-```
+```yaml
+
 ---
 apiVersion: v1
 kind: Service
@@ -331,7 +334,8 @@ spec:
 
 在该方法中，使用下面的命令重建jenkins容器：
 
-```
+```shell
+
 docker run  -d  -u root  -v /usr/bin/docker:/usr/bin/docker -v /var/run/docker.sock:/var/run/docker.sock -v /usr/lib64/libltdl.so.7:/usr/lib/x86_64-linux-gnu/libltdl.so.7 jenkins/jenkins:2.208
 
 ```
@@ -364,7 +368,8 @@ root@cbbc3907c1bc: cd /var/jenkins_home/ && dpkg -i apt-transport-https_1.2.32ub
 
 排除网络问题后，说明外网可以联通，这时候再去尝试修改源文件信息，参考[Linux系统初始化以及部署](Linux系统初始化以及部署.md)文档，修改源信息。由于这里Dockerfile编写的时候使用的是ubuntu，更改会稍有不同。操作如下：
 
-```
+```shell
+ 
 // 离线安装apt-transport-https
 
 

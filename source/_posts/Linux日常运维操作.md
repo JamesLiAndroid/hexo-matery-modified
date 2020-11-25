@@ -693,13 +693,16 @@ categories: DevOps
         // 检查 MySQL 的 YUM 源是否安装成功
         # yum repolist enabled | grep "mysql.*-community.*"
 
+        // 加入缓存信息
+        # yum makecache fast
+
         // 如果结果中出现mysql57-community/x86_64的信息，说明安装成功
 
         // 查看MySQL版本
         # yum repolist all | grep mysql
 
-        // 安装MySQL
-        # yum install -y mysql57-community-server 
+        // 安装MySQL，这样安装并不是安装5.7.25版本，有可能是5.7.31这样的版本
+        # yum install -y mysql-community-server 
 
         // 启动MySQL服务
         # systemctl start mysqld
@@ -714,6 +717,42 @@ categories: DevOps
         $ mysql -u root -p 
     
 注意事项:
+
+0. 关于MySQL在安装后修改初始化密码出现的问题解决：
+
+```
+$ mysql -u root -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 4
+Server version: 5.7.25
+
+Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> UPDATE mysql.user SET authentication_string=PASSWORD('htMySQL789') where USER='root';
+ERROR 1820 (HY000): You must reset your password using ALTER USER statement before executing this statement.
+mysql> show databases;
+ERROR 1820 (HY000): You must reset your password using ALTER USER statement before executing this statement.
+mysql> ALTER USER USER() IDENTIFIED BY 'htMySQL789';
+ERROR 1819 (HY000): Your password does not satisfy the current policy requirements
+mysql> SHOW VARIABLES LIKE 'validate_password%';
+ERROR 1820 (HY000): You must reset your password using ALTER USER statement before executing this statement.
+mysql> set global validate_password_policy=LOW;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> ALTER USER USER() IDENTIFIED BY 'htMySQL789';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> exit
+Bye
+
+```
 
 1. 针对rpm+yum安装，刚安装的 MySQL 是没有密码的，这时如果出现：
 
@@ -1482,3 +1521,15 @@ scp  -r  /path  username@servername:/path
 例如: scp -r  /ygf/test  ubuntu@117.50.20.56:/ygf/tx     “-r”命令是文件夹目录，把当前/ygf/test目录下所有文件上传到服务器的/ygf/tx/目录中
 
 参考自：https://www.cnblogs.com/tectal/p/9478326.html
+
+6. 关于shell脚本编写问题
+
+执行 shell 脚本 \r 问题解决
+一看应该是 windows 的回车换行跟 linux 换行差异，百度了一下，的确有很多类似问题，在 windows 下编辑 shell 文件，输入的回车是 "\r\n" ，导致在 linux 下执行 shell 脚本时报这个 \r 的错。
+怎么办？想办法解决。
+让开发或测试自己想办法转化或者在 linux 环境编辑这个 build.sh 很明显不现实，在服务器安装 dos2unix 来转化 build.sh 我又要在主从节点分别重新构建镜像，麻烦。想了想用替换的方式看能否实现，百度一下，使用 sed -i 's/\r//' 来处理 build.sh 后再执行，即 sed -i 's/\r//' build.sh && bash build.sh，完美解决问题，大功告成！！！
+
+```
+$ sed -i 's/\r//' init.sh
+$ sed -i 's/\r//' ssh-keygen-send.sh
+```

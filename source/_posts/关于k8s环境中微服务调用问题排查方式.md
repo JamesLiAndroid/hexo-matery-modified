@@ -396,7 +396,7 @@ eureka:
     ipAddress: ${spring.cloud.client.ip-address}
   client:
     service-url:
-      defaultZone: http://hoteam:hoteam2019@192.168.232.239:31011/eureka/
+      defaultZone: http://test:test2019@192.168.232.239:31011/eureka/
 
 swagger:
   enable: true
@@ -404,7 +404,7 @@ swagger:
 logging:
   level:
    com:
-    hoteamsoft: debug
+    testsoft: debug
 
 debug: true
 

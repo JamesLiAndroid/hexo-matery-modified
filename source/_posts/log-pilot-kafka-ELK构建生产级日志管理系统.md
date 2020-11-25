@@ -421,7 +421,7 @@ $ sudo systemctl restart logstash
 在开发环境部署机器中，我们启动一个数据字典服务，利用log-pilot来采集该服务所在docker镜像的日志信息，启动方式如下：
 
 ```
-$ docker run -d -p 19090:19090 -e CHANNEL="standalone" -e IP_ADDR="10.0.66.199" -e NACOS_IP="10.0.66.206:18848" -e NACOS_NAMESPACE="858b37b1-35be-4564-a24e-dc2c322d5784"  -e SKYWALKING_NAMESPACE="icp-cloud-dev" -e SKYWALKING_TARGET_SERVICE_NAME="icp-cloud-data-dict-develop" -e SKYWALKING_IP_PORT="10.0.66.208:11800" --label aliyun.logs.dict=stdout --label aliyun.logs.dict.tags="topic=test,env=dev,service=icp-cloud-data-dict"  --name icp-cloud-dict 10.0.66.202:5000/icp-cloud-data-dict-develop:$BUILD_NUMBER
+$ docker run -d -p 19090:19090 -e CHANNEL="standalone" -e IP_ADDR="10.0.66.199" -e NACOS_IP="10.0.66.206:18848" -e NACOS_NAMESPACE="858b37b1-35be-4564-a24e-dc2c322d5784"  -e SKYWALKING_NAMESPACE="test-dev" -e SKYWALKING_TARGET_SERVICE_NAME="test-data-dict-develop" -e SKYWALKING_IP_PORT="10.0.66.208:11800" --label aliyun.logs.dict=stdout --label aliyun.logs.dict.tags="topic=test,env=dev,service=test-data-dict"  --name test-dict 10.0.66.202:5000/test-data-dict-develop:$BUILD_NUMBER
 
 ```
 
@@ -430,8 +430,8 @@ $ docker run -d -p 19090:19090 -e CHANNEL="standalone" -e IP_ADDR="10.0.66.199" 
 - --label aliyun.logs.dict=stdout  
   指定日志所属的服务，stdout表示采集docker输出的日志信息
 
-- --label aliyun.logs.dict.tags="topic=test,env=dev,service=icp-cloud-data-dict"  
-  指定服务对应的tags，其中*topic=test*指定了kafka里面已有的topic，*env=dev*指定来自开发环境的日志，*service=icp-cloud-data-dict*指定服务的名称
+- --label aliyun.logs.dict.tags="topic=test,env=dev,service=test-data-dict"  
+  指定服务对应的tags，其中*topic=test*指定了kafka里面已有的topic，*env=dev*指定来自开发环境的日志，*service=test-data-dict*指定服务的名称
 
 启动数据字典之后，用与上文同样的方式启动log-pilot镜像，这样就开启了收集日志的工作：
 
@@ -678,7 +678,7 @@ metadata:
   name: log-pilot
   labels:
     app: log-pilot
-  namespace: icp-cloud-basic-log-pilot
+  namespace: test-basic-log-pilot
 spec:
   updateStrategy:
     type: RollingUpdate
@@ -764,16 +764,16 @@ spec:
 // :wq保存退出
 
 // 部署
-$ kubectl create ns icp-cloud-basic-log=pilot
+$ kubectl create ns test-basic-log=pilot
 
-$ kubectl apply -f log-pilot.yaml -n icp-cloud-basic-log=pilot
+$ kubectl apply -f log-pilot.yaml -n test-basic-log=pilot
 
 ```
 
 部署完成后，查看已存在的pod信息，如下：
 
 ```
-$ kubectl get pod -n icp-cloud-basic-log-pilot
+$ kubectl get pod -n test-basic-log-pilot
 NAME              READY   STATUS    RESTARTS   AGE
 log-pilot-6rw6z   1/1     Running   0          22h
 log-pilot-bkb9w   1/1     Running   1          22h
@@ -795,23 +795,23 @@ log-pilot-nwgxn   1/1     Running   1          22h
 apiVersion: v1
 kind: Service
 metadata:
-  name: icp-cloud-data-dictionary
-  namespace: icp-cloud-all-service
+  name: test-data-dictionary
+  namespace: test-all-service
   labels:
-    app: icp-cloud-data-dictionary
+    app: test-data-dictionary
 spec:
   ports:
     - port: ${SERVER_PORT}
       name: tcp
       targetPort: ${SERVER_PORT}
   selector:
-    app: icp-cloud-data-dictionary
+    app: test-data-dictionary
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: icp-cloud-data-dictionary
-  namespace: icp-cloud-all-service
+  name: test-data-dictionary
+  namespace: test-all-service
 spec:
   minReadySeconds: 10
   revisionHistoryLimit: 10
@@ -823,11 +823,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: icp-cloud-data-dictionary
+      app: test-data-dictionary
   template:
     metadata:
       labels:
-        app: icp-cloud-data-dictionary
+        app: test-data-dictionary
     spec:
       affinity:
         podAntiAffinity:
@@ -839,7 +839,7 @@ spec:
                     - key: app
                       operator: In
                       values:
-                        - app-icp-cloud-data-dictionary
+                        - app-test-data-dictionary
               weight: 1
       containers:
         - name: data-dictionary
@@ -885,15 +885,15 @@ spec:
               value: stdout
             # 配置环境变量，配置tag
             - name: aliyun_logs_dict_tags
-              value: topic=test,env=test,service=icp-cloud-data-dict
+              value: topic=test,env=test,service=test-data-dict
             - name: NACOS_IP
               value: ${NACOS_IP_PORT}
             - name: NACOS_NAMESPACE
               value: ${NACOS_NAMESPACE}
             - name: SKYWALKING_NAMESPACE
-              value: icp-cloud-k8s-test
+              value: test-k8s-test
             - name: SKYWALKING_TARGET_SERVICE_NAME
-              value: icp-cloud-data-dic
+              value: test-data-dic
             - name: SKYWALKING_IP_PORT
               value: ${SKYWALKING_IP_PORT}
             - name: CHANNEL

@@ -85,14 +85,14 @@ userinfo.txt
 将导出的信息重新整理，整理后的userinfo.txt如下：
 
 ```
-zhongyanyan123 zhongyanyan     zhongyanyan@hoteamsoft.com     active  zhongyanyan
-zongquanxiang123 zongquanxiang   zongquanxiang@hoteamsoft.com   active  zongquanxiang
-yangjiajie123 yangjiajie      yangjiajie@hoteamsoft.com      active  yangjiajie
-sujingfang123 sujingfang      sujingfang@hoteamsoft.com      active  sujingfang
-yangshuai123 yangshuai       yangshuai@hoteamsoft.com       active  yangshuai
-wangchao123 wangchao        wangchao@hoteamsoft.com        active  wangchao
-zhanglianjiang123 zhanglianjiang  zhanglianjiang@hoteamsoft.com  active  zhanglianjiang
-liulily123 liulily         liulili@hoteamsoft.com         active  liulily
+zhongyanyan123 zhongyanyan     zhongyanyan@testsoft.com     active  zhongyanyan
+zongquanxiang123 zongquanxiang   zongquanxiang@testsoft.com   active  zongquanxiang
+yangjiajie123 yangjiajie      yangjiajie@testsoft.com      active  yangjiajie
+sujingfang123 sujingfang      sujingfang@testsoft.com      active  sujingfang
+yangshuai123 yangshuai       yangshuai@testsoft.com       active  yangshuai
+wangchao123 wangchao        wangchao@testsoft.com        active  wangchao
+zhanglianjiang123 zhanglianjiang  zhanglianjiang@testsoft.com  active  zhanglianjiang
+liulily123 liulily         liulili@testsoft.com         active  liulily
 
 ```
 

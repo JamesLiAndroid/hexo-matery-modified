@@ -29,7 +29,7 @@ categories:
 通过ELK日志统一收集系统，查看错误日志信息，我们目前只对206服务进行了日志采集，先来看206的日志信息：
 
 ```
-2020-07-23 17:31:49.164 ERROR [icp-cloud-register,,,] 12962 --- [_192.168.128.207-13] c.n.e.cluster.ReplicationTaskProcessor   : Network level connection to peer 192.168.128.207; retrying after delay
+2020-07-23 17:31:49.164 ERROR [test-register,,,] 12962 --- [_192.168.128.207-13] c.n.e.cluster.ReplicationTaskProcessor   : Network level connection to peer 192.168.128.207; retrying after delay
 
 com.sun.jersey.api.client.ClientHandlerException: java.net.ConnectException: Connection refused (Connection refused)
         at com.sun.jersey.client.apache4.ApacheHttpClient4Handler.handle(ApacheHttpClient4Handler.java:187) ~[jersey-apache-client4-1.19.1.jar!/:1.19.1]
@@ -70,7 +70,7 @@ Caused by: java.net.ConnectException: Connection refused (Connection refused)
         at com.sun.jersey.client.apache4.ApacheHttpClient4Handler.handle(ApacheHttpClient4Handler.java:173) ~[jersey-apache-client4-1.19.1.jar!/:1.19.1]
         ... 10 common frames omitted
 
-2020-07-23 17:31:58.629 ERROR [icp-cloud-register,,,] 12962 --- [_192.168.128.207-19] c.n.e.cluster.ReplicationTaskProcessor   : It seems to be a socket read timeout exception, it will retry later. if it continues to happen and some eureka node occupied all the cpu time, you should set property 'eureka.server.peer-node-read-timeout-ms' to a bigger value
+2020-07-23 17:31:58.629 ERROR [test-register,,,] 12962 --- [_192.168.128.207-19] c.n.e.cluster.ReplicationTaskProcessor   : It seems to be a socket read timeout exception, it will retry later. if it continues to happen and some eureka node occupied all the cpu time, you should set property 'eureka.server.peer-node-read-timeout-ms' to a bigger value
 
 com.sun.jersey.api.client.ClientHandlerException: java.net.SocketTimeoutException: Read timed out
         at com.sun.jersey.client.apache4.ApacheHttpClient4Handler.handle(ApacheHttpClient4Handler.java:187) ~[jersey-apache-client4-1.19.1.jar!/:1.19.1]
@@ -127,118 +127,118 @@ INFO 2020-07-23 17:31:07:097 main SnifferConfigInitializer : Config file found i
    / // /   / /_/ /_____/ /   / / __ \/ / / / __  /
  _/ // /___/ ____/_____/ /___/ / /_/ / /_/ / /_/ /
 /___/\____/_/          \____/_/\____/\__,_/\__,_/
-============ * powered by hoteamsoft * ============
-2020-07-23 17:31:26.529  INFO [icp-cloud-register,,,] 14661 --- [           main] c.a.n.c.c.impl.LocalConfigInfoProcessor  : LOCAL_SNAPSHOT_PATH:/home/centos/nacos/config
-2020-07-23 17:31:26.694  INFO [icp-cloud-register,,,] 14661 --- [           main] c.a.nacos.client.config.impl.Limiter     : limitTime:5.0
-2020-07-23 17:31:27.040  WARN [icp-cloud-register,,,] 14661 --- [           main] c.a.c.n.c.NacosPropertySourceBuilder     : Ignore the empty nacos configuration and get it based on dataId[icp-cloud-register] & group[DEFAULT_GROUP]
-2020-07-23 17:31:27.047  INFO [icp-cloud-register,,,] 14661 --- [           main] c.a.nacos.client.config.utils.JVMUtil    : isMultiInstance:false
-2020-07-23 17:31:27.084  INFO [icp-cloud-register,,,] 14661 --- [           main] b.c.PropertySourceBootstrapConfiguration : Located property source: [BootstrapPropertySource {name='bootstrapProperties-icp-cloud-register-peer1.yml,DEFAULT_GROUP'}, BootstrapPropertySource {name='bootstrapProperties-icp-cloud-register.yml,DEFAULT_GROUP'}, BootstrapPropertySource {name='bootstrapProperties-icp-cloud-register,DEFAULT_GROUP'}]
-2020-07-23 17:31:27.209  INFO [icp-cloud-register,,,] 14661 --- [           main] c.h.c.s.ServerRegisterApplication        : The following profiles are active: peer1
-2020-07-23 17:31:30.192  WARN [icp-cloud-register,,,] 14661 --- [           main] o.s.boot.actuate.endpoint.EndpointId     : Endpoint ID 'nacos-config' contains invalid characters, please migrate to a valid format.
-2020-07-23 17:31:31.499  WARN [icp-cloud-register,,,] 14661 --- [           main] o.s.boot.actuate.endpoint.EndpointId     : Endpoint ID 'service-registry' contains invalid characters, please migrate to a valid format.
-2020-07-23 17:31:32.833  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=0a3a956c-cd1a-35c8-ae9f-743a8cc478b8
-2020-07-23 17:31:38.139  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 19012 (http)
-2020-07-23 17:31:38.162  INFO [icp-cloud-register,,,] 14661 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2020-07-23 17:31:38.162  INFO [icp-cloud-register,,,] 14661 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.33]
-2020-07-23 17:31:38.611  INFO [icp-cloud-register,,,] 14661 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2020-07-23 17:31:38.611  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 11320 ms
-2020-07-23 17:31:39.731  WARN [icp-cloud-register,,,] 14661 --- [           main] c.n.c.sources.URLConfigurationSource     : No URLs will be polled as dynamic configuration sources.
-2020-07-23 17:31:39.732  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.c.sources.URLConfigurationSource     : To enable URLs as dynamic configuration sources, define System property archaius.configurationSource.additionalUrls or make config.properties available on classpath.
-2020-07-23 17:31:39.802  INFO [icp-cloud-register,,,] 14661 --- [           main] c.netflix.config.DynamicPropertyFactory  : DynamicPropertyFactory is initialized with configuration sources: com.netflix.config.ConcurrentCompositeConfiguration@31a2a9fa
-2020-07-23 17:31:42.077  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
-2020-07-23 17:31:43.217  INFO [icp-cloud-register,,,] 14661 --- [           main] c.s.j.s.i.a.WebApplicationImpl           : Initiating Jersey application, version 'Jersey: 1.19.1 03/11/2016 02:08 PM'
-2020-07-23 17:31:43.513  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON encoding codec LegacyJacksonJson
-2020-07-23 17:31:43.513  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON decoding codec LegacyJacksonJson
-2020-07-23 17:31:44.523  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML encoding codec XStreamXml
-2020-07-23 17:31:44.523  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML decoding codec XStreamXml
-2020-07-23 17:31:47.543  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@37314843, org.springframework.security.web.context.SecurityContextPersistenceFilter@70f148dc, org.springframework.security.web.header.HeaderWriterFilter@4d69d288, org.springframework.security.web.authentication.logout.LogoutFilter@4dd2ef54, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@45d4421d, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@77aea, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@3a3883c4, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@50122012, org.springframework.security.web.session.SessionManagementFilter@787178b1, org.springframework.security.web.access.ExceptionTranslationFilter@4b28a7bf, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@74e497ae]
-2020-07-23 17:31:47.589  WARN [icp-cloud-register,,,] 14661 --- [           main] c.n.c.sources.URLConfigurationSource     : No URLs will be polled as dynamic configuration sources.
-2020-07-23 17:31:47.590  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.c.sources.URLConfigurationSource     : To enable URLs as dynamic configuration sources, define System property archaius.configurationSource.additionalUrls or make config.properties available on classpath.
-2020-07-23 17:31:50.199  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
-2020-07-23 17:31:52.842  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
-2020-07-23 17:31:53.861  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
-2020-07-23 17:31:53.995  WARN [icp-cloud-register,,,] 14661 --- [           main] ockingLoadBalancerClientRibbonWarnLogger : You already have RibbonLoadBalancerClient on your classpath. It will be used by default. As Spring Cloud Ribbon is in maintenance mode. We recommend switching to BlockingLoadBalancerClient instead. In order to use it, set the value of `spring.cloud.loadbalancer.ribbon.enabled` to `false` or remove spring-cloud-starter-netflix-ribbon from your project.
-2020-07-23 17:31:54.274  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.c.n.eureka.InstanceInfoFactory       : Setting initial instance status as: STARTING
-2020-07-23 17:31:54.848  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Initializing Eureka in region us-east-1
-2020-07-23 17:31:55.892  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON encoding codec LegacyJacksonJson
-2020-07-23 17:31:55.892  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON decoding codec LegacyJacksonJson
-2020-07-23 17:31:55.892  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML encoding codec XStreamXml
-2020-07-23 17:31:55.892  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML decoding codec XStreamXml
-2020-07-23 17:31:56.242  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
-2020-07-23 17:31:56.347  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Disable delta property : false
-2020-07-23 17:31:56.348  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Single vip registry refresh property : null
-2020-07-23 17:31:56.348  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Force full registry fetch : false
-2020-07-23 17:31:56.348  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Application is null : false
-2020-07-23 17:31:56.348  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Registered Applications size is zero : true
-2020-07-23 17:31:56.348  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Application version is -1: true
-2020-07-23 17:31:56.348  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Getting all instance registry info from the eureka server
-2020-07-23 17:31:57.524  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : The response status is 200
-2020-07-23 17:31:57.535  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Starting heartbeat executor: renew interval is: 30
-2020-07-23 17:31:57.540  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.discovery.InstanceInfoReplicator     : InstanceInfoReplicator onDemand update allowed rate per min is 4
-2020-07-23 17:31:57.562  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Discovery Client initialized at timestamp 1595496717546 with initial instances count: 17
-2020-07-23 17:31:57.671  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.eureka.DefaultEurekaServerContext    : Initializing ...
-2020-07-23 17:31:57.676  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.eureka.cluster.PeerEurekaNodes       : Adding new peer nodes [http://hoteam:hoteam2019@192.168.128.208:19013/eureka/, http://hoteam:hoteam2019@192.168.128.206:19011/eureka/]
-2020-07-23 17:31:57.686  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON encoding codec LegacyJacksonJson
-2020-07-23 17:31:57.687  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON decoding codec LegacyJacksonJson
-2020-07-23 17:31:57.687  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML encoding codec XStreamXml
-2020-07-23 17:31:57.687  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML decoding codec XStreamXml
-2020-07-23 17:31:57.855  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON encoding codec LegacyJacksonJson
-2020-07-23 17:31:57.856  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON decoding codec LegacyJacksonJson
-2020-07-23 17:31:57.856  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML encoding codec XStreamXml
-2020-07-23 17:31:57.856  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML decoding codec XStreamXml
-2020-07-23 17:31:57.953  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.eureka.cluster.PeerEurekaNodes       : Replica node URL:  http://hoteam:hoteam2019@192.168.128.208:19013/eureka/
-2020-07-23 17:31:57.953  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.eureka.cluster.PeerEurekaNodes       : Replica node URL:  http://hoteam:hoteam2019@192.168.128.206:19011/eureka/
-2020-07-23 17:31:57.975  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.e.registry.AbstractInstanceRegistry  : Finished initializing remote region registries. All known remote regions: []
-2020-07-23 17:31:57.976  INFO [icp-cloud-register,,,] 14661 --- [           main] c.n.eureka.DefaultEurekaServerContext    : Initialized
-2020-07-23 17:31:58.184  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 18 endpoint(s) beneath base path '/actuator'
-2020-07-23 17:31:58.267  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application ICP-CLOUD-REGISTER with eureka with status UP
-2020-07-23 17:31:58.268  INFO [icp-cloud-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1595496718268, current=UP, previous=STARTING]
-2020-07-23 17:31:58.303  INFO [icp-cloud-register,,,] 14661 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ICP-CLOUD-REGISTER/icp-cloud-register@192.168.128.207:19012: registering service...
-2020-07-23 17:31:58.318  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] o.s.c.n.e.server.EurekaServerBootstrap   : Setting the eureka configuration..
-2020-07-23 17:31:58.328  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] o.s.c.n.e.server.EurekaServerBootstrap   : Eureka data center value eureka.datacenter is not set, defaulting to default
-2020-07-23 17:31:58.329  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] o.s.c.n.e.server.EurekaServerBootstrap   : Eureka environment value eureka.environment is not set, defaulting to test
-2020-07-23 17:31:58.410  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] o.s.c.n.e.server.EurekaServerBootstrap   : isAws returned false
-2020-07-23 17:31:58.410  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] o.s.c.n.e.server.EurekaServerBootstrap   : Initialized server context
-2020-07-23 17:31:58.465  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-FILESTORE/icp-cloud-filestore@192.168.128.199:20060 with status UP (replication=true)
-2020-07-23 17:31:58.466  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-GATEWAY/icp-cloud-gateway@192.168.128.209:19020 with status UP (replication=true)
-2020-07-23 17:31:58.466  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-BASE-PSL/icp-cloud-base-psl@192.168.128.199:24020 with status UP (replication=true)
-2020-07-23 17:31:58.467  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-APP-INF/icp-cloud-app-inf@192.168.128.199:20140 with status UP (replication=true)
-2020-07-23 17:31:58.468  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-REGISTER/icp-cloud-register@192.168.128.206:19011 with status UP (replication=true)
-2020-07-23 17:31:58.468  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-REGISTER/icp-cloud-register@192.168.128.208:19013 with status UP (replication=true)
-2020-07-23 17:31:58.469  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-BASE-RDP/icp-cloud-base-rdp@192.168.128.199:20151 with status UP (replication=true)
-2020-07-23 17:31:58.470  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-ADMIN-SERVER/icp-cloud-admin-server@192.168.128.199:19760 with status UP (replication=true)
-2020-07-23 17:31:58.475  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-UAA/icp-cloud-uaa@192.168.128.199:19060 with status UP (replication=true)
-2020-07-23 17:31:58.476  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-FORM/icp-cloud-form@192.168.128.199:20040 with status UP (replication=true)
-2020-07-23 17:31:58.476  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-ID-GENERATOR/icp-cloud-id-generator@192.168.128.199:8080 with status UP (replication=true)
-2020-07-23 17:31:58.477  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-PSL-EQUIPMENT-MANAGEMENT/icp-cloud-psl-equipment-management@192.168.128.199:24010 with status UP (replication=true)
-2020-07-23 17:31:58.478  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-UMC/icp-cloud-umc@192.168.128.199:19070 with status UP (replication=true)
-2020-07-23 17:31:58.478  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-DICT/icp-cloud-dict@10.0.93.99:19090 with status UP (replication=true)
-2020-07-23 17:31:58.479  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-WORKFLOW/icp-cloud-workflow@192.168.128.199:20050 with status UP (replication=true)
-2020-07-23 17:31:58.480  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-BASE/icp-cloud-base@192.168.128.199:20130 with status UP (replication=true)
-2020-07-23 17:31:58.480  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-VISUALMODEL/icp-cloud-visualmodel@10.0.93.99:20020 with status UP (replication=true)
-2020-07-23 17:31:58.480  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.r.PeerAwareInstanceRegistryImpl    : Got 17 instances from neighboring DS node
-2020-07-23 17:31:58.480  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.r.PeerAwareInstanceRegistryImpl    : Renew threshold is: 28
-2020-07-23 17:31:58.481  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] c.n.e.r.PeerAwareInstanceRegistryImpl    : Changing status to UP
-2020-07-23 17:31:58.499  INFO [icp-cloud-register,,,] 14661 --- [      Thread-14] e.s.EurekaServerInitializerConfiguration : Started Eureka Server
-2020-07-23 17:31:58.511  INFO [icp-cloud-register,,,] 14661 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_ICP-CLOUD-REGISTER/icp-cloud-register@192.168.128.207:19012 - registration status: 204
-2020-07-23 17:31:58.519  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 19012 (http) with context path ''
-2020-07-23 17:31:58.521  INFO [icp-cloud-register,,,] 14661 --- [           main] .s.c.n.e.s.EurekaAutoServiceRegistration : Updating port to 19012
-2020-07-23 17:31:58.699  INFO [icp-cloud-register,,,] 14661 --- [io-19012-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2020-07-23 17:31:58.700  INFO [icp-cloud-register,,,] 14661 --- [io-19012-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2020-07-23 17:31:58.731  INFO [icp-cloud-register,,,] 14661 --- [io-19012-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 31 ms
-2020-07-23 17:31:59.308  INFO [icp-cloud-register,9481285215d134b2,9481285215d134b2,false] 14661 --- [io-19012-exec-2] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-REGISTER/icp-cloud-register@192.168.128.207:19012 with status UP (replication=true)
-2020-07-23 17:31:59.522  INFO [icp-cloud-register,,,] 14661 --- [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
-2020-07-23 17:31:59.526  INFO [icp-cloud-register,,,] 14661 --- [           main] c.h.c.s.ServerRegisterApplication        : Started ServerRegisterApplication in 43.119 seconds (JVM running for 54.87)
-2020-07-23 17:31:59.543  INFO [icp-cloud-register,,,] 14661 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [subscribe] icp-cloud-register.yml+DEFAULT_GROUP+858b37b1-35be-4564-a24e-dc2c322d5784
-2020-07-23 17:31:59.547  INFO [icp-cloud-register,,,] 14661 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [add-listener] ok, tenant=858b37b1-35be-4564-a24e-dc2c322d5784, dataId=icp-cloud-register.yml, group=DEFAULT_GROUP, cnt=1
-2020-07-23 17:31:59.547  INFO [icp-cloud-register,,,] 14661 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [subscribe] icp-cloud-register+DEFAULT_GROUP+858b37b1-35be-4564-a24e-dc2c322d5784
-2020-07-23 17:31:59.547  INFO [icp-cloud-register,,,] 14661 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [add-listener] ok, tenant=858b37b1-35be-4564-a24e-dc2c322d5784, dataId=icp-cloud-register, group=DEFAULT_GROUP, cnt=1
-2020-07-23 17:31:59.548  INFO [icp-cloud-register,,,] 14661 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [subscribe] icp-cloud-register-peer1.yml+DEFAULT_GROUP+858b37b1-35be-4564-a24e-dc2c322d5784
-2020-07-23 17:31:59.548  INFO [icp-cloud-register,,,] 14661 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [add-listener] ok, tenant=858b37b1-35be-4564-a24e-dc2c322d5784, dataId=icp-cloud-register-peer1.yml, group=DEFAULT_GROUP, cnt=1
-2020-07-23 17:31:59.563  INFO [icp-cloud-register,,,] 14661 --- [4e-dc2c322d5784] c.a.n.client.config.impl.ClientWorker    : get changedGroupKeys:[]
-2020-07-23 17:31:59.903  INFO [icp-cloud-register,78c19310aaaa187c,78c19310aaaa187c,false] 14661 --- [io-19012-exec-4] c.n.e.registry.AbstractInstanceRegistry  : Registered instance ICP-CLOUD-REGISTER/icp-cloud-register@192.168.128.207:19012 with status UP (replication=true)
-2020-07-23 17:32:29.268  INFO [icp-cloud-register,,,] 14661 --- [4e-dc2c322d5784] c.a.n.client.config.impl.ClientWorker    : get changedGroupKeys:[]
-2020-07-23 17:32:58.483  INFO [icp-cloud-register,,,] 14661 --- [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : Running the evict task 
+============ * powered by testsoft * ============
+2020-07-23 17:31:26.529  INFO [test-register,,,] 14661 --- [           main] c.a.n.c.c.impl.LocalConfigInfoProcessor  : LOCAL_SNAPSHOT_PATH:/home/centos/nacos/config
+2020-07-23 17:31:26.694  INFO [test-register,,,] 14661 --- [           main] c.a.nacos.client.config.impl.Limiter     : limitTime:5.0
+2020-07-23 17:31:27.040  WARN [test-register,,,] 14661 --- [           main] c.a.c.n.c.NacosPropertySourceBuilder     : Ignore the empty nacos configuration and get it based on dataId[test-register] & group[DEFAULT_GROUP]
+2020-07-23 17:31:27.047  INFO [test-register,,,] 14661 --- [           main] c.a.nacos.client.config.utils.JVMUtil    : isMultiInstance:false
+2020-07-23 17:31:27.084  INFO [test-register,,,] 14661 --- [           main] b.c.PropertySourceBootstrapConfiguration : Located property source: [BootstrapPropertySource {name='bootstrapProperties-test-register-peer1.yml,DEFAULT_GROUP'}, BootstrapPropertySource {name='bootstrapProperties-test-register.yml,DEFAULT_GROUP'}, BootstrapPropertySource {name='bootstrapProperties-test-register,DEFAULT_GROUP'}]
+2020-07-23 17:31:27.209  INFO [test-register,,,] 14661 --- [           main] c.h.c.s.ServerRegisterApplication        : The following profiles are active: peer1
+2020-07-23 17:31:30.192  WARN [test-register,,,] 14661 --- [           main] o.s.boot.actuate.endpoint.EndpointId     : Endpoint ID 'nacos-config' contains invalid characters, please migrate to a valid format.
+2020-07-23 17:31:31.499  WARN [test-register,,,] 14661 --- [           main] o.s.boot.actuate.endpoint.EndpointId     : Endpoint ID 'service-registry' contains invalid characters, please migrate to a valid format.
+2020-07-23 17:31:32.833  INFO [test-register,,,] 14661 --- [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=0a3a956c-cd1a-35c8-ae9f-743a8cc478b8
+2020-07-23 17:31:38.139  INFO [test-register,,,] 14661 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 19012 (http)
+2020-07-23 17:31:38.162  INFO [test-register,,,] 14661 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2020-07-23 17:31:38.162  INFO [test-register,,,] 14661 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.33]
+2020-07-23 17:31:38.611  INFO [test-register,,,] 14661 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2020-07-23 17:31:38.611  INFO [test-register,,,] 14661 --- [           main] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 11320 ms
+2020-07-23 17:31:39.731  WARN [test-register,,,] 14661 --- [           main] c.n.c.sources.URLConfigurationSource     : No URLs will be polled as dynamic configuration sources.
+2020-07-23 17:31:39.732  INFO [test-register,,,] 14661 --- [           main] c.n.c.sources.URLConfigurationSource     : To enable URLs as dynamic configuration sources, define System property archaius.configurationSource.additionalUrls or make config.properties available on classpath.
+2020-07-23 17:31:39.802  INFO [test-register,,,] 14661 --- [           main] c.netflix.config.DynamicPropertyFactory  : DynamicPropertyFactory is initialized with configuration sources: com.netflix.config.ConcurrentCompositeConfiguration@31a2a9fa
+2020-07-23 17:31:42.077  INFO [test-register,,,] 14661 --- [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
+2020-07-23 17:31:43.217  INFO [test-register,,,] 14661 --- [           main] c.s.j.s.i.a.WebApplicationImpl           : Initiating Jersey application, version 'Jersey: 1.19.1 03/11/2016 02:08 PM'
+2020-07-23 17:31:43.513  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON encoding codec LegacyJacksonJson
+2020-07-23 17:31:43.513  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON decoding codec LegacyJacksonJson
+2020-07-23 17:31:44.523  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML encoding codec XStreamXml
+2020-07-23 17:31:44.523  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML decoding codec XStreamXml
+2020-07-23 17:31:47.543  INFO [test-register,,,] 14661 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@37314843, org.springframework.security.web.context.SecurityContextPersistenceFilter@70f148dc, org.springframework.security.web.header.HeaderWriterFilter@4d69d288, org.springframework.security.web.authentication.logout.LogoutFilter@4dd2ef54, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@45d4421d, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@77aea, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@3a3883c4, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@50122012, org.springframework.security.web.session.SessionManagementFilter@787178b1, org.springframework.security.web.access.ExceptionTranslationFilter@4b28a7bf, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@74e497ae]
+2020-07-23 17:31:47.589  WARN [test-register,,,] 14661 --- [           main] c.n.c.sources.URLConfigurationSource     : No URLs will be polled as dynamic configuration sources.
+2020-07-23 17:31:47.590  INFO [test-register,,,] 14661 --- [           main] c.n.c.sources.URLConfigurationSource     : To enable URLs as dynamic configuration sources, define System property archaius.configurationSource.additionalUrls or make config.properties available on classpath.
+2020-07-23 17:31:50.199  INFO [test-register,,,] 14661 --- [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+2020-07-23 17:31:52.842  INFO [test-register,,,] 14661 --- [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
+2020-07-23 17:31:53.861  INFO [test-register,,,] 14661 --- [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
+2020-07-23 17:31:53.995  WARN [test-register,,,] 14661 --- [           main] ockingLoadBalancerClientRibbonWarnLogger : You already have RibbonLoadBalancerClient on your classpath. It will be used by default. As Spring Cloud Ribbon is in maintenance mode. We recommend switching to BlockingLoadBalancerClient instead. In order to use it, set the value of `spring.cloud.loadbalancer.ribbon.enabled` to `false` or remove spring-cloud-starter-netflix-ribbon from your project.
+2020-07-23 17:31:54.274  INFO [test-register,,,] 14661 --- [           main] o.s.c.n.eureka.InstanceInfoFactory       : Setting initial instance status as: STARTING
+2020-07-23 17:31:54.848  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Initializing Eureka in region us-east-1
+2020-07-23 17:31:55.892  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON encoding codec LegacyJacksonJson
+2020-07-23 17:31:55.892  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON decoding codec LegacyJacksonJson
+2020-07-23 17:31:55.892  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML encoding codec XStreamXml
+2020-07-23 17:31:55.892  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML decoding codec XStreamXml
+2020-07-23 17:31:56.242  INFO [test-register,,,] 14661 --- [           main] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2020-07-23 17:31:56.347  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Disable delta property : false
+2020-07-23 17:31:56.348  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Single vip registry refresh property : null
+2020-07-23 17:31:56.348  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Force full registry fetch : false
+2020-07-23 17:31:56.348  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Application is null : false
+2020-07-23 17:31:56.348  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Registered Applications size is zero : true
+2020-07-23 17:31:56.348  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Application version is -1: true
+2020-07-23 17:31:56.348  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Getting all instance registry info from the eureka server
+2020-07-23 17:31:57.524  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : The response status is 200
+2020-07-23 17:31:57.535  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Starting heartbeat executor: renew interval is: 30
+2020-07-23 17:31:57.540  INFO [test-register,,,] 14661 --- [           main] c.n.discovery.InstanceInfoReplicator     : InstanceInfoReplicator onDemand update allowed rate per min is 4
+2020-07-23 17:31:57.562  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Discovery Client initialized at timestamp 1595496717546 with initial instances count: 17
+2020-07-23 17:31:57.671  INFO [test-register,,,] 14661 --- [           main] c.n.eureka.DefaultEurekaServerContext    : Initializing ...
+2020-07-23 17:31:57.676  INFO [test-register,,,] 14661 --- [           main] c.n.eureka.cluster.PeerEurekaNodes       : Adding new peer nodes [http://test:test2019@192.168.128.208:19013/eureka/, http://test:test2019@192.168.128.206:19011/eureka/]
+2020-07-23 17:31:57.686  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON encoding codec LegacyJacksonJson
+2020-07-23 17:31:57.687  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON decoding codec LegacyJacksonJson
+2020-07-23 17:31:57.687  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML encoding codec XStreamXml
+2020-07-23 17:31:57.687  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML decoding codec XStreamXml
+2020-07-23 17:31:57.855  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON encoding codec LegacyJacksonJson
+2020-07-23 17:31:57.856  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using JSON decoding codec LegacyJacksonJson
+2020-07-23 17:31:57.856  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML encoding codec XStreamXml
+2020-07-23 17:31:57.856  INFO [test-register,,,] 14661 --- [           main] c.n.d.provider.DiscoveryJerseyProvider   : Using XML decoding codec XStreamXml
+2020-07-23 17:31:57.953  INFO [test-register,,,] 14661 --- [           main] c.n.eureka.cluster.PeerEurekaNodes       : Replica node URL:  http://test:test2019@192.168.128.208:19013/eureka/
+2020-07-23 17:31:57.953  INFO [test-register,,,] 14661 --- [           main] c.n.eureka.cluster.PeerEurekaNodes       : Replica node URL:  http://test:test2019@192.168.128.206:19011/eureka/
+2020-07-23 17:31:57.975  INFO [test-register,,,] 14661 --- [           main] c.n.e.registry.AbstractInstanceRegistry  : Finished initializing remote region registries. All known remote regions: []
+2020-07-23 17:31:57.976  INFO [test-register,,,] 14661 --- [           main] c.n.eureka.DefaultEurekaServerContext    : Initialized
+2020-07-23 17:31:58.184  INFO [test-register,,,] 14661 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 18 endpoint(s) beneath base path '/actuator'
+2020-07-23 17:31:58.267  INFO [test-register,,,] 14661 --- [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application test-REGISTER with eureka with status UP
+2020-07-23 17:31:58.268  INFO [test-register,,,] 14661 --- [           main] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1595496718268, current=UP, previous=STARTING]
+2020-07-23 17:31:58.303  INFO [test-register,,,] 14661 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_test-REGISTER/test-register@192.168.128.207:19012: registering service...
+2020-07-23 17:31:58.318  INFO [test-register,,,] 14661 --- [      Thread-14] o.s.c.n.e.server.EurekaServerBootstrap   : Setting the eureka configuration..
+2020-07-23 17:31:58.328  INFO [test-register,,,] 14661 --- [      Thread-14] o.s.c.n.e.server.EurekaServerBootstrap   : Eureka data center value eureka.datacenter is not set, defaulting to default
+2020-07-23 17:31:58.329  INFO [test-register,,,] 14661 --- [      Thread-14] o.s.c.n.e.server.EurekaServerBootstrap   : Eureka environment value eureka.environment is not set, defaulting to test
+2020-07-23 17:31:58.410  INFO [test-register,,,] 14661 --- [      Thread-14] o.s.c.n.e.server.EurekaServerBootstrap   : isAws returned false
+2020-07-23 17:31:58.410  INFO [test-register,,,] 14661 --- [      Thread-14] o.s.c.n.e.server.EurekaServerBootstrap   : Initialized server context
+2020-07-23 17:31:58.465  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-FILESTORE/test-filestore@192.168.128.199:20060 with status UP (replication=true)
+2020-07-23 17:31:58.466  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-GATEWAY/test-gateway@192.168.128.209:19020 with status UP (replication=true)
+2020-07-23 17:31:58.466  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-BASE-PSL/test-base-psl@192.168.128.199:24020 with status UP (replication=true)
+2020-07-23 17:31:58.467  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-APP-INF/test-app-inf@192.168.128.199:20140 with status UP (replication=true)
+2020-07-23 17:31:58.468  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-REGISTER/test-register@192.168.128.206:19011 with status UP (replication=true)
+2020-07-23 17:31:58.468  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-REGISTER/test-register@192.168.128.208:19013 with status UP (replication=true)
+2020-07-23 17:31:58.469  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-BASE-RDP/test-base-rdp@192.168.128.199:20151 with status UP (replication=true)
+2020-07-23 17:31:58.470  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-ADMIN-SERVER/test-admin-server@192.168.128.199:19760 with status UP (replication=true)
+2020-07-23 17:31:58.475  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-UAA/test-uaa@192.168.128.199:19060 with status UP (replication=true)
+2020-07-23 17:31:58.476  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-FORM/test-form@192.168.128.199:20040 with status UP (replication=true)
+2020-07-23 17:31:58.476  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-ID-GENERATOR/test-id-generator@192.168.128.199:8080 with status UP (replication=true)
+2020-07-23 17:31:58.477  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-PSL-EQUIPMENT-MANAGEMENT/test-psl-equipment-management@192.168.128.199:24010 with status UP (replication=true)
+2020-07-23 17:31:58.478  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-UMC/test-umc@192.168.128.199:19070 with status UP (replication=true)
+2020-07-23 17:31:58.478  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-DICT/test-dict@10.0.93.99:19090 with status UP (replication=true)
+2020-07-23 17:31:58.479  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-WORKFLOW/test-workflow@192.168.128.199:20050 with status UP (replication=true)
+2020-07-23 17:31:58.480  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-BASE/test-base@192.168.128.199:20130 with status UP (replication=true)
+2020-07-23 17:31:58.480  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-VISUALMODEL/test-visualmodel@10.0.93.99:20020 with status UP (replication=true)
+2020-07-23 17:31:58.480  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.r.PeerAwareInstanceRegistryImpl    : Got 17 instances from neighboring DS node
+2020-07-23 17:31:58.480  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.r.PeerAwareInstanceRegistryImpl    : Renew threshold is: 28
+2020-07-23 17:31:58.481  INFO [test-register,,,] 14661 --- [      Thread-14] c.n.e.r.PeerAwareInstanceRegistryImpl    : Changing status to UP
+2020-07-23 17:31:58.499  INFO [test-register,,,] 14661 --- [      Thread-14] e.s.EurekaServerInitializerConfiguration : Started Eureka Server
+2020-07-23 17:31:58.511  INFO [test-register,,,] 14661 --- [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_test-REGISTER/test-register@192.168.128.207:19012 - registration status: 204
+2020-07-23 17:31:58.519  INFO [test-register,,,] 14661 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 19012 (http) with context path ''
+2020-07-23 17:31:58.521  INFO [test-register,,,] 14661 --- [           main] .s.c.n.e.s.EurekaAutoServiceRegistration : Updating port to 19012
+2020-07-23 17:31:58.699  INFO [test-register,,,] 14661 --- [io-19012-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2020-07-23 17:31:58.700  INFO [test-register,,,] 14661 --- [io-19012-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2020-07-23 17:31:58.731  INFO [test-register,,,] 14661 --- [io-19012-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 31 ms
+2020-07-23 17:31:59.308  INFO [test-register,9481285215d134b2,9481285215d134b2,false] 14661 --- [io-19012-exec-2] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-REGISTER/test-register@192.168.128.207:19012 with status UP (replication=true)
+2020-07-23 17:31:59.522  INFO [test-register,,,] 14661 --- [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
+2020-07-23 17:31:59.526  INFO [test-register,,,] 14661 --- [           main] c.h.c.s.ServerRegisterApplication        : Started ServerRegisterApplication in 43.119 seconds (JVM running for 54.87)
+2020-07-23 17:31:59.543  INFO [test-register,,,] 14661 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [subscribe] test-register.yml+DEFAULT_GROUP+858b37b1-35be-4564-a24e-dc2c322d5784
+2020-07-23 17:31:59.547  INFO [test-register,,,] 14661 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [add-listener] ok, tenant=858b37b1-35be-4564-a24e-dc2c322d5784, dataId=test-register.yml, group=DEFAULT_GROUP, cnt=1
+2020-07-23 17:31:59.547  INFO [test-register,,,] 14661 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [subscribe] test-register+DEFAULT_GROUP+858b37b1-35be-4564-a24e-dc2c322d5784
+2020-07-23 17:31:59.547  INFO [test-register,,,] 14661 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [add-listener] ok, tenant=858b37b1-35be-4564-a24e-dc2c322d5784, dataId=test-register, group=DEFAULT_GROUP, cnt=1
+2020-07-23 17:31:59.548  INFO [test-register,,,] 14661 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [subscribe] test-register-peer1.yml+DEFAULT_GROUP+858b37b1-35be-4564-a24e-dc2c322d5784
+2020-07-23 17:31:59.548  INFO [test-register,,,] 14661 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-192.168.128.206_18848-858b37b1-35be-4564-a24e-dc2c322d5784] [add-listener] ok, tenant=858b37b1-35be-4564-a24e-dc2c322d5784, dataId=test-register-peer1.yml, group=DEFAULT_GROUP, cnt=1
+2020-07-23 17:31:59.563  INFO [test-register,,,] 14661 --- [4e-dc2c322d5784] c.a.n.client.config.impl.ClientWorker    : get changedGroupKeys:[]
+2020-07-23 17:31:59.903  INFO [test-register,78c19310aaaa187c,78c19310aaaa187c,false] 14661 --- [io-19012-exec-4] c.n.e.registry.AbstractInstanceRegistry  : Registered instance test-REGISTER/test-register@192.168.128.207:19012 with status UP (replication=true)
+2020-07-23 17:32:29.268  INFO [test-register,,,] 14661 --- [4e-dc2c322d5784] c.a.n.client.config.impl.ClientWorker    : get changedGroupKeys:[]
+2020-07-23 17:32:58.483  INFO [test-register,,,] 14661 --- [a-EvictionTimer] c.n.e.registry.AbstractInstanceRegistry  : Running the evict task 
 
 ```
 
