@@ -486,6 +486,52 @@ workspace--> 排序，查看最大与最小的内容           14G    --> 9.6G
 
 3. 快速批量删除Jenkins构建清理磁盘空间并按参数保留最近构建
 
+## jenkins升级
+
+这里从2.204版本升级到2.263.4_LTS版本。
+
+直接从[官网](https://updates.jenkins-ci.org/download/war/)下载2.263.4版本的war包。
+
+首先备份之前的war包，通过下面的命令进行：
+
+```
+
+// 全局查找war包信息
+# find / -name jenkins.war
+/usr/lib/jenkins/jenkins.war
+
+// 停止jenkins运行
+# systemctl stop jenkins
+
+// 一般默认路径为/usr/lib/jenkins/
+
+# cd /usr/lib/jenkins
+# mv jenkins.war /root/jenkins_backup
+
+```
+
+备份完成后，下载war包，也可以选择在客户机下载后再拷贝进去。
+
+```
+
+// 下载war包信息
+# wget https://updates.jenkins-ci.org/download/war/2.274/jenkins.war
+
+```
+
+下载完成war包后，再重新启动jenkins服务。
+
+```
+
+# systemctl restart jenkins
+
+// 查看端口号
+# sudo netstat -nlp | grep 9090
+
+```
+
+这样就完成了jenkins的升级。
+
 ## 总结
 
 jenkins备份相对不那么好做，由于历史的原因，一些配置的设定上并没有那么合理，需要在迁移完成后重新进行设置，并且一定构建一支工程进行测试，确保测试无误后，投入使用。

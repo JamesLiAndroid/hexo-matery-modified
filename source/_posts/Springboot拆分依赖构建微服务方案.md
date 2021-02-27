@@ -42,7 +42,7 @@ Dockerfile 的每一行命令都创建新的一层，包含了这一行命令执
 
 首先看一下整个项目的目录结构：
 
-![](./imgs/项目目录结构.png)
+![](项目目录结构.png)
 
 需要注意的是，修改时要在module的内部的pom文件中进行修改，不能在最外部修改，否则容易造成生成的jar包集合路径不正确，导致找不到依赖，无法启动业务jar包。
 
@@ -50,7 +50,7 @@ Dockerfile 的每一行命令都创建新的一层，包含了这一行命令执
 
 下面对module内的pom文件进行修改如下：
 
-```
+```xml
 <!-- 增加以下信息 -->
     <build>
         <plugins>
@@ -97,9 +97,9 @@ Dockerfile 的每一行命令都创建新的一层，包含了这一行命令执
 
 这样基本上就可以在本地进行测试了，在命令行中使用*mvn clean install*命令执行，打包后，target目录下的结构如下：
 
-![](./imgs/target目录信息.png)
+![](target目录信息.png)
 
-这样libs就是剥离出的jar包依赖集合，目录中的icp开头的jar包自然就是我们的业务jar包。这样拆分后该jar包从以前的70多MB大小，降到300多kb大小，就加速了构建时copy操作的速度。
+这样libs就是剥离出的jar包依赖集合，目录中的test开头的jar包自然就是我们的业务jar包。这样拆分后该jar包从以前的70多MB大小，降到300多kb大小，就加速了构建时copy操作的速度。
 
 最后需要进行测试，相比之前启动命令发生了变化，如下：
 
@@ -133,6 +133,46 @@ ENTRYPOINT ["sh", "-c", "java -Dloader.path=\"libs/\" -XX:MaxRAMPercentage=75.0 
 
 主要是修改了两点，一是将依赖jar包集合所在的文件夹copy到对应目录，另一个就是启动命令指定依赖jar包的路径信息。
 
+## 调整
+
+1. ide中的调整启动方式
+
+需要在intellij idea编辑器中，添加启动参数，如下图：
+
+![](idea项目启动命令.png)
+
+主要是将**-Dloader.path="libs/"**添加到启动时的VM Options一行中。
+
+2. 异常信息：Error running "Application":Command line is too long.Shorten command line for or also for Spring Boot configuration.
+
+解决方式：在项目所在的*.idea*文件夹中，找到**workspace.xml**文件，然后在文件中搜索*PropertiesComponent*，在该标签的内容中插入：
+
+```xml
+<property name="dynamic.classpath" value="true"></property>
+
+```
+
+最终修改后如下：
+
+```xml
+
+ <component name="PropertiesComponent">
+    <property name="ExpandSpringBootJavaOptionsPanel" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/pom.xml" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="MavenSettings" />
+    <!-- 新增一行解决异常信息 -->
+    <property name="dynamic.classpath" value="true"></property>
+  </component>
+
+
+```
+
 ## 总结
 
 需要调整好多东西，参考文章中的内容需要辩证看待，另外，也需要自己去实践，将方案做出来！
@@ -144,3 +184,4 @@ ENTRYPOINT ["sh", "-c", "java -Dloader.path=\"libs/\" -XX:MaxRAMPercentage=75.0 
 * https://blog.csdn.net/weixin_44460333/article/details/104624236
 * https://juejin.cn/post/6844904119338008583
 * [Docker参考](https://blog.csdn.net/weixin_44460333/article/details/103020487)
+* [运行异常解决](https://stackoverflow.com/questions/47926382/how-to-configure-shorten-command-line-method-for-whole-project-in-intellij)

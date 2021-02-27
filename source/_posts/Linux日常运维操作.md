@@ -113,6 +113,8 @@ categories: DevOps
         nameserver 223.5.5.5 // 阿里的公共DNS
         nameserver 223.6.6.6
 
+        nameserver 202.102.152.3 // 山东网通的dns
+
         // :wq保存文件
 
         // 重启network服务
@@ -131,6 +133,9 @@ categories: DevOps
 
         // 2. 下载yum源，目前这里使用163的
         # wget http://mirrors.163.com/.help/CentOS7-Base-163.repo
+
+        // 可以使用aliyun的yum源，不需要执行下面修改名称的操作
+        # wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
 
         // 3. 执行替换操作
         # mv CentOS7-Base-163.repo CentOS7-Base.repo
@@ -205,8 +210,14 @@ categories: DevOps
         // 11. 安装tree实现文件夹下批量展示
         # yum install -y tree
 
+        // 12. 安装jq可以对json数据进行分片、过滤、映射和转换，
+        # yum install -y jq
+
     注意：“-y”代表同意安装该程序，无需在安装时确定
 
+    一条命令安装如下：
+
+        # yum install -y wget git unzip net-tools curl vim telnet psmisc  tree sshpass jq
 
 ### 2. 用户配置
 
@@ -235,6 +246,11 @@ categories: DevOps
         root    ALL=(ALL)       ALL
         #centos  ALL=NOPASSWD:/usr/libexec/openssh/sftp-server
         centos  ALL=(ALL)       ALL    # 添加该行信息
+
+* 修改主机名称
+
+        // 变更服务器hostname
+        # hostnamectl set-hostname your-own-machine-name
 
 * **注意**：一定不要在生产环境启用root权限，原则上不允许在线上环境切换到root用户执行命令。
 
@@ -396,6 +412,11 @@ categories: DevOps
         // 3.3 开启使用用户名密码来作为连接验证
         PasswordAuthentication yes
 
+        // 3.4 加速ssh连接速度
+        GSSAPIAuthentication no
+        // 如果这句没有需要自己添加，如果被注释请放开注释
+        UseDNS no
+
         // 设置完成后, :wq 退出编辑
     
         // 4. 重启ssh服务，重启网络，并设置开机启动sshd，依次执行下面的命令
@@ -497,6 +518,63 @@ categories: DevOps
 参考链接：
 
 * 关于进程相关命令的说明：https://www.cnblogs.com/alongdidi/p/linux_process.html
+
+### 8.内核升级和优化（非必选）
+
+以内核升级到4.19版本为例，进行操作，需要在root用户下操作。
+
+首先更新并重启机器，需要排除内核信息
+
+```
+# yum update -y --exclude=kernel* && reboot
+
+```
+
+在生产环境中必须进行内核升级，如果需要安装docker，强烈建议将CentOS 7的内核版本升级到4.18+。 这里使用4.19版本
+
+```
+# cd /root
+# wget http://193.49.22.109/elrepo/kernel/el7/x86_64/RPMS/kernel-ml-4.19.12-1.el7.elrepo.x86_64.rpm
+# wget http://193.49.22.109/elrepo/kernel/el7/x86_64/RPMS/kernel-ml-devel-4.19.12-1.el7.elrepo.x86_64.rpm
+
+```
+
+可以先下载后再上传到服务器上，如果有多个服务器，可以使用下面的示例命令，传输到各个服务器上。
+
+```
+
+// 将内核文件传输到各个机器上
+
+# for i in k8s-master-02 k8s-master-03 k8s-node-01 k8s-node-02; do scp kernel-ml-4.19.12-1.el7.elrepo.x86_64.rpm kernel-ml-devel-4.19.12-1.el7.elrepo.x86_64.rpm $i:/root/ ;done
+
+```
+
+开始安装内核信息，在服务器上执行以下命令，如下：
+
+```
+# cd /root/ && yum localinstall kernel-ml* -y
+
+```
+
+安装完成后，需要更改内核启动顺序，以便启动时自动选择最新的内核版本信息。
+
+```
+# grub2-set-default 0 && grub2-mkconfig -o /etc/grub2.cfg
+# grubby --args="user_namespace.enable=1" --update-kernel="$(grubby --default-kernel)"
+
+```
+
+最后检查内核版本信息。
+
+```
+# grubby --default-kernel
+// 输出以下版本信息
+/boot/vmlinuz-4.19.12-1.el7.elrepo.x86_64
+
+```
+
+所有节点重启，再检查内核信息。
+
 
 ## 软件安装
 

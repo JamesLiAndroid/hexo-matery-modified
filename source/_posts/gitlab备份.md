@@ -130,6 +130,110 @@ categories: DevOps
 
 这时访问192.168.1.198:8181，可以访问到新的gitlab，用之前的用户名密码进行登录即可。但是可能之前的ssh_key会不可用。
 
+## 补充：使用rpm的方式安装gitlab
+
+```
+$ wget https://mirrors.tuna.tsinghua.edu.cn/gitlab-ce/yum/el7/gitlab-ce-12.2.5-ce.0.el7.x86_64.rpm
+
+$ sudo yum install -y policycoreutils-python
+
+$ sudo rpm -i gitlab-ce-12.2.5-ce.0.el7.x86_64.rpm
+warning: gitlab-ce-12.2.5-ce.0.el7.x86_64.rpm: Header V4 RSA/SHA1 Signature, key ID f27eab47: NOKEY
+It looks like GitLab has not been configured yet; skipping the upgrade script.
+
+       *.                  *.
+      ***                 ***
+     *****               *****
+    .******             *******
+    ********            ********
+   ,,,,,,,,,***********,,,,,,,,,
+  ,,,,,,,,,,,*********,,,,,,,,,,,
+  .,,,,,,,,,,,*******,,,,,,,,,,,,
+      ,,,,,,,,,*****,,,,,,,,,.
+         ,,,,,,,****,,,,,,
+            .,,,***,,,,
+                ,*,.
+
+
+
+     _______ __  __          __
+    / ____(_) /_/ /   ____ _/ /_
+   / / __/ / __/ /   / __ `/ __ \
+  / /_/ / / /_/ /___/ /_/ / /_/ /
+  \____/_/\__/_____/\__,_/_.___/
+
+
+Thank you for installing GitLab!
+GitLab was unable to detect a valid hostname for your instance.
+Please configure a URL for your GitLab instance by setting `external_url`
+configuration in /etc/gitlab/gitlab.rb file.
+Then, you can start your GitLab instance by running the following command:
+  sudo gitlab-ctl reconfigure
+
+For a comprehensive list of configuration options please see the Omnibus GitLab readme
+https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/README.md
+
+$ sudo vim /etc/gitlab/gitlab.rb
+// 修改external-url如下：
+external_url 'http://192.168.1.198:8181'
+
+// 配置刷新
+$ sudo gitlab-ctl reconfigure
+
+// 重启
+$ sudo gitlab-ctl restart
+
+```
+
+启动完成后，访问http://192.168.1.198:8181，重新设置管理员密码，即可进行登录！
+
+## 定时备份并发送备份文件到服务器
+
+脚本信息编写如下：
+
+```bash
+
+#!/bin/bash
+# 参数信息
+remote_user='root'
+remote_host='192.168.1.62'
+remote_passwd='123456'
+# 备份docker中的gitlab信息
+docker exec -t gitlab gitlab-rake gitlab:backup:create
+# 判断文件是否存在
+bak_file_tar=`ls /home/centos/gitlab/data/backups/ | grep gitlab_backup`
+if [ ! -f "$bak_file_tar" ]; then
+    echo "备份文件 $bak_file_tar 存在，开始传输"
+    sshpass -p $remote_passwd scp -r /home/centos/gitlab/data/backups/ $remote_user@$remote_host:/home/backup/gitlab/
+    # sshpass -p $remote_passwd scp -r /home/centos/gitlab/data/backups $remote_user@$remote_host:~/
+    echo "=============传输完毕================="
+fi
+
+```
+
+主要是在docker中进行备份，由于我们的gitlab做了外部路径的映射，可以在外部路径直接传输备份文件。
+
+在操作之前需要先安装sshpass工具，安装完成后需要先执行以下scp命令连接一下陌生的主机，获取主机指纹信息，获取完成后sshpass工具才能正常运行，如下：
+
+```
+
+# yum install sshpass -y
+
+# scp workflow.txt root@192.168.1.62:~/
+The authenticity of host '192.168.1.62 (192.168.1.62)' can't be established.
+ECDSA key fingerprint is SHA256:rFFMBntJrMa/7ljJbRngqNmqhA/eFuuEZ2qmPqRh34k.
+ECDSA key fingerprint is MD5:59:df:64:7c:48:3c:af:67:96:55:54:93:f1:5c:cb:c5.
+Are you sure you want to continue connecting (yes/no)?yes
+Warning: Permanently added '192.168.1.62' (ECDSA) to the list of known hosts.
+root@192.168.1.62's password:
+
+// ctrl+c终止执行
+
+// 执行上面编写的脚本
+# sh +x send.sh
+
+```
+
 ## 说明
 
 * 文件权限问题，所属
