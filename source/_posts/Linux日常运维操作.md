@@ -213,6 +213,9 @@ categories: DevOps
         // 12. 安装jq可以对json数据进行分片、过滤、映射和转换，
         # yum install -y jq
 
+        // 13. 安装yum工具
+        # yum install -y yum-utls
+
     注意：“-y”代表同意安装该程序，无需在安装时确定
 
     一条命令安装如下：

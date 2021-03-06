@@ -5253,3 +5253,438 @@ root@nginx-5d67cccf59-69fv8:/# cat /opt/123
 
 这样就实现了文件的共享。需要注意的是，在含有多个容器的Pod中，指定要访问的容器信息，需要使用"-c"来进行指定。
 
+2.14.4 nfs安装与挂载
+
+在192.168.229.54这台机器上安装nfs，如下：
+
+```
+
+# yum install nfs-utils -y
+
+# systemctl enable nfs-server && systemctl start nfs-server
+
+```
+这样就启动了nfs服务，查看当前nfs服务支持的nfs版本，如下：
+
+```
+# cat /proc/fs/nfsd/versions
+-2 +3 +4 +4.1 +4.2
+
+```
+
+下面开始创建并配置共享目录，如下：
+
+```
+# mkdir -p /data/nfs
+
+// 修改export配置文件，加入该目录
+
+# vim /etc/exports
+// 添加以下内容
+/data/nfs 192.168.229.0/24(rw,sync,no_subtree_check,no_root_squash)
+
+// :wq保存退出
+
+// 配置完成后需要使配置生效
+# exportfs -r
+
+# systemctl restart nfs-server
+```
+
+这样nfs就安装完成了，重要的是，需要给剩下的每个节点装一下nfs-utils，否则会出现挂载的时候识别不了nfs存储。全部安装完成后，下面回到192.168.229.1这台机器上，尝试挂载nfs，操作如下：
+
+```
+# mount -t nfs 192.168.229.54:/data/nfs /mnt/
+
+```
+
+挂载完成后可以在nfs安装的机器上查看挂载信息，如下：
+
+```
+# showmount -e
+Export list for k8s-node-01:
+/data/nfs 192.168.229.0/24
+
+```
+
+这时回到192.168.229.51机器上，创建文件，测试nfs是否可用，如下：
+
+```
+# cd /mnt && touch 123 && echo "111111111111111111" > 123
+
+```
+
+在nginx中挂载nfs服务，首先在192.168.229.51所在机器上，卸载nfs服务所在的文件夹，然后再进行挂载。
+
+```
+
+# umount /mnt
+
+// 找到之前的nginx配置文件，通过volumes挂载nfs服务
+# cd ~/k8s-practice/volumes && vim nginx-volumes.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+  namespace: default
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx:1.16.1
+        imagePullPolicy: IfNotPresent
+        name: nginx
+        ports:
+        - name: enter
+          containerPort: 80
+        volumeMounts:
+        - mountPath: /mnt
+          name: share-volume
+
+      - image: nginx:1.15.2
+        imagePullPolicy: IfNotPresent
+        name: nginx2
+        command:
+        - sh
+        - -c
+        - sleep 3600
+        ports:
+        - name: enter2
+          containerPort: 81
+        volumeMounts:
+        - mountPath: /opt
+          name: share-volume
+        # 2. 挂载nfs服务
+        - mountPath: /mnt
+          name: nfs-volume          
+
+      volumes:
+      - name: share-volume
+        emptyDir: {}
+          # 如果使用Memory的设置，需要去除上面的花括号
+          #medium: Memory
+      - name: timezone
+        hostPath:
+          path: /etc/timezone
+          type: File
+      # 1. 添加nfs目录
+      - name: nfs-volume
+        nfs:
+          server: 192.168.229.54
+          # 0. 记得在nfs服务器上首先创建该目录，并且在该目录下创建名称为123的文件
+          path: /data/nfs/test-dp
+
+// :wq保存退出
+
+// 使配置信息生效并进行查看
+# kubectl replace -f nginx-deployment.yaml
+
+// 查看结果
+# kubectl exec -it nginx-64fcb85cd9-5gk8x -- ls -al /opt
+drwxrwxrwx 2 root root 17 Feb 27 04:25 .
+drwxr-xr-x 1 root root 28 Feb 27 04:28 ..
+-rw-r--r-- 1 root root 19 Feb 27 04:25 123
+
+```
+
+**注意：**在生产环境中还是不推荐使用nfs存储的，由于nfs没有任何高可用的保障，难以实现高可用的架构。
+
+一般情况下使用pv和pvc的方式挂载nfs。
+
+2.14.5 持久化存储PV和PVC
+
+Volume：NFS、Ceph、GFS
+
+PV：PersistentVolume，NFS、Ceph、GFS，由k8s配置连接不同的存储，PV同样使集群的一类资源，可以用yaml进行定义，相当于一块存储。可以由管理员定义，由PV去连接后向的存储。
+
+PVC：PersistentVolumeClaim，对PV的申请。将PVC挂载到容器中，由容器去使用。
+
+Pod --> PVC --> PV --> Storage
+
+PV/PVC用来管理k8s的存储，降低了复杂度和简化了使用。PV通过不同的配置，连接对应的后向存储，但是PVC连接PV的时候，使用相同的方式连接。PV用作申请存储，而PVC用作绑定存储。
+
+PV又区分为动态存储和静态存储。
+
+2.14.5.1 使用PV连接nfs存储
+
+```yaml
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv0003
+spec:
+  # PV的容量
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  # 回收策略
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: slow
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /tmp
+    server: 172.17.0.2
+
+
+```
+
+回收策略persistentVolumeReclaimPolicy: Retain、Recycle和Delete
+
+- Recycle：回收并销毁文件，rm -rf
+- Retain: 保留
+- Delete：删除了PVC，同时也会删除PV，这一类的PV需要支持删除的功能（动态存储支持）
+
+Capacity：PV的容量
+
+volumeMode： 挂载类型，FileSystem、block
+
+accessModes：访问模式
+
+- ReadWriteOnce： RWO，可以被单节点以读写模式挂载
+- ReadWriteMany： RWX，可以被多节点以读写模式挂载
+- ReadOnlyMany： ROX，可以被多个节点以只读模式挂载
+
+storageClassName：PV的类（类名），PVC和PV的这个名字一样才能被绑定，名字不同，读写权限不同是不能进行绑定的。
+
+mountOptions：挂载参数
+
+**注意：**不需要记住所有的配置，只需要知道连接的原理即可。
+
+实际操作，创建PV，配置文件如下：
+
+```yaml
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv0001
+spec:
+  # PV的容量
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  # 回收策略
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: nfs-slow
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /data/nfs/test-dp
+    server: 192.168.229.54
+
+
+
+```
+
+注意：PV没有namespace的限制，直接创建即可。但PVC有namespace限制！
+
+```
+// 创建pv
+# kubectl create -f nginx-pv.yaml
+
+// 查看pv
+# kubectl get pv
+NAME     CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE
+pv0001   1Gi        RWX            Recycle          Available           nfs-slow                9s
+
+```
+
+PV的状态：
+
+- Available：空闲的，没有被任何pvc绑定
+- Bound: 已经被pvc绑定
+- Released： pvc被删除，但是资源未被重新使用
+- Failed：自动回收失败
+
+创建一个pvc去申请使用pv，配置文件如下：
+
+```yaml
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myclaim
+spec:
+  # 访问策略要和pv中配置的权限一致
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      # 存储大小不能超过pv创建时配置的文件大小
+      # 如果超过pv创建时配置的存储大小，将会导致找不到对应的pv
+      storage: 1Gi
+  # 这个位置名称要和pv中配置的名称一致
+  storageClassName: nfs-slow
+
+```
+
+创建pv信息如下：
+
+```
+# kubectl create -f nginx-pvc.yaml
+
+# kubectl get pvc
+NAME     STATUS   VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+my-pvc   Bound    pv0001   1Gi        RWX            nfs-slow       19s
+
+# kubectl get pv
+NAME     CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM            STORAGECLASS   REASON   AGE
+pv0001   1Gi        RWX            Recycle          Bound    default/my-pvc   nfs-slow                12m
+
+```
+
+创建成功后，可以看到pv和pvc的状态，均为bound的状态，pv的claim下也显示了哪个pvc绑定了该pv。
+
+**注意：**PVC不允许使用kubectl edit命令进行更改
+
+最后在deployment中使用这个pvc。
+
+```yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+  namespace: default
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx:1.16.1
+        imagePullPolicy: IfNotPresent
+        name: nginx
+        ports:
+        - name: enter
+          containerPort: 80
+        volumeMounts:
+        - mountPath: /mnt
+          name: share-volume
+        - mountPath: /opt
+          name: nfs-volume
+
+      - image: nginx:1.15.2
+        imagePullPolicy: IfNotPresent
+        name: nginx2
+        command:
+        - sh
+        - -c
+        - sleep 3600
+        ports:
+        - name: enter2
+          containerPort: 81
+        volumeMounts:
+        # 2. 挂载pvc所在的目录
+        - mountPath: /tmp/pvc
+          name: pvc-test
+
+      volumes:
+      - name: share-volume
+        emptyDir: {}
+          # 如果使用Memory的设置，需要去除上面的花括号
+          #medium: Memory
+      - name: timezone
+        hostPath:
+          path: /etc/timezone
+          type: File
+      # 1. 新增pvc的引用
+      - name: pvc-test
+        persistentVolumeClaim:
+          # 注意：claimName对应的是pvc的名称
+          claimName: my-pvc
+
+```
+
+创建pv的配置文件信息可能有不同，但是对于pvc和volume的挂载，使用方式是一致的。
+
+最后使其生效，然后查看结果：
+
+```
+# kubectl create -f nginx-pv-pvc.yaml
+
+# kubectl get pod
+NAME                          READY   STATUS      RESTARTS   AGE
+nginx-6976f57754-75chk        2/2     Running     0          4m42s
+nginx-6976f57754-8fjzp        2/2     Running     0          4m42s
+nginx-6976f57754-rp6p5        2/2     Running     0          4m42s
+
+# kubectl exec -it nginx-6976f57754-rp6p5 -c nginx2 -- df -Th
+Filesystem                       Type     Size  Used Avail Use% Mounted on
+overlay                          overlay   17G  5.0G   13G  30% /
+tmpfs                            tmpfs     64M     0   64M   0% /dev
+tmpfs                            tmpfs    2.0G     0  2.0G   0% /sys/fs/cgroup
+/dev/mapper/centos-root          xfs       17G  5.0G   13G  30% /opt
+192.168.229.54:/data/nfs/test-dp nfs4      17G  5.0G   13G  30% /tmp/pvc
+shm                              tmpfs     64M     0   64M   0% /dev/shm
+tmpfs                            tmpfs    2.0G   12K  2.0G   1% /run/secrets/kubernetes.io/serviceaccount
+tmpfs                            tmpfs    2.0G     0  2.0G   0% /proc/acpi
+tmpfs                            tmpfs    2.0G     0  2.0G   0% /proc/scsi
+tmpfs                            tmpfs    2.0G     0  2.0G   0% /sys/firmware
+
+```
+
+可以看到*192.168.229.54:/data/nfs/test-dp nfs4      17G  5.0G   13G  30% /tmp/pvc*记录已经显示pvc挂载到该容器中。
+
+这时候，可以进入到容器中对应的/tmp/pvc目录下，创建文件并添加内容，最终可以在nfs存储所在的机器上同时看到该文件。
+
+2.14.5.2 常见问题
+
+- 创建PVC之后一致绑定不上PV
+
+1. PVC的空间申请大小大于PV的大小
+2. PVC的StorageClassName没有和PV中设定的一致
+3. PVC的访问模式accessModes和PV中设定的不一致
+
+- 创建挂在了PVC的Pod之后，一直处于Pending状态
+
+1. PVC没有创建成功，或者被创建
+2. PVC和Pod不在同一个namespace下
+
+删除时，必须先删除PV再删除PVC，如果先删除PVC，PV会一直处于Terminal状态，导致容器删不掉的情况。
+
+如果要删除PVC，必须将所有使用PVC的容器删掉。
+
+PVC有namespace的区分，PV则是全局存在的。
+
+Recycle模式下，回收PV时，会主动创建一个回收镜像来进行回收操作。删除PVC以后，k8s或创建一个用于回收的Pod，根据PV的回收策略进行PV的回收，回收完以后，PV的状态就会变成可被绑定的状态，也就是空闲状态，其它Pending状态的PVC如果匹配到这个PV，就可以和这个PV进行绑定。
+
+PV支持selector标签挂载。
