@@ -187,6 +187,64 @@ $ sudo gitlab-ctl restart
 
 启动完成后，访问http://192.168.1.198:8181，重新设置管理员密码，即可进行登录！
 
+## gitlab 502 问题排查
+
+安装好GitLab，开启服务，发现有502错误.
+
+排查措施如下：
+
+<!-- 1.找到/var/log/gitlab/nginx中的错误日志文件，发现有如下错误/var/opt/gitlab/gitlab-rails/sockets/gitlab.socket failed (2: No such file or directory)，然后用 nc命令创建了这个socket文件，最终权限设为 srwxrwxrwx，用户和组设置为git:git，但发现这个方法行不通。 -->
+
+1. 跑到GitLab的官网去寻找解决办法，https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/README.md 
+ctrl+f 502 找到官方教程中说502出现的问题
+
+```
+Note that on a single-core server it may take up to a minute to restart Unicorn and Sidekiq. Your GitLab instance will give a 502 error until Unicorn is up again.
+
+It is also possible to start, stop or restart individual components.
+
+sudo gitlab-ctl restart sidekiq 
+Unicorn supports zero-downtime reloads. These can be triggered as follows:
+
+sudo gitlab-ctl hup unicorn 
+Note that you cannot use a Unicorn reload to update the Ruby runtime.
+```
+
+尝试用上面两个命令解决，发现没有用。但这时不断的输入gitlab-ctl status,发现unicorn的pid一直在变大。而其他几个服务的pid没有变化。
+
+2. 这时差不多找到了问题的所在了，应该就是unicorn的问题。然后看官方教程，可以使用gitlab-ctl tail unicorn 来跟踪unicorn的状态，这时候悲催的发现原来时8080端口被占用了
+
+```
+E, [2015-02-11T17:27:57.818492 #26687] ERROR -- : adding listener failed addr=127.0.0.1:8080 (in use)
+E, [2015-02-11T17:27:57.818621 #26687] ERROR -- : retrying in 0.5 seconds (4 tries left)
+E, [2015-02-11T17:27:58.318902 #26687] ERROR -- : adding listener failed addr=127.0.0.1:8080 (in use)
+E, [2015-02-11T17:27:58.318998 #26687] ERROR -- : retrying in 0.5 seconds (3 tries left)
+E, [2015-02-11T17:27:58.819309 #26687] ERROR -- : adding listener failed addr=127.0.0.1:8080 (in use)
+E, [2015-02-11T17:27:58.819423 #26687] ERROR -- : retrying in 0.5 seconds (2 tries left)
+E, [2015-02-11T17:27:59.319954 #26687] ERROR -- : adding listener failed addr=127.0.0.1:8080 (in use)
+E, [2015-02-11T17:27:59.320076 #26687] ERROR -- : retrying in 0.5 seconds (1 tries left)
+
+```
+
+3. 终于发现了问题的所在。这时候的选择就变成了是把原来8080端口的服务给杀了还是将unicorn的端口换一个呢。这个就看自己的具体需求了。我这边是将unicorn端口换成了9090，方法如下：
+
+```
+# sudo vim /etc/gitlab/gitlab.rb
+
+// 修改unicorn运行端口
+unicorn['port'] = 9090
+
+```
+
+修改完成后执行reconfigure和restart命令如下：
+
+```
+# gitlab-ctl reconfigure
+
+# sudo gitlab-ctl restart
+
+```
+
 ## 定时备份并发送备份文件到服务器
 
 脚本信息编写如下：

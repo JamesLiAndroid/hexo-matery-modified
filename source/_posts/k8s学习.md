@@ -24,6 +24,10 @@ vim /etc/hosts
 192.168.229.54 k8s-node-01
 192.168.229.55 k8s-node-02
 
+顺道记下来两个内部网段信息：
+
+- k8s Service 网段：10.96.0.0/12
+- k8s Pod网段：172.168.0.0/12
 
 修改yum源
 
@@ -103,6 +107,8 @@ vim /etc/security/limits.conf
 ssh-keygen -t rsa
 for i in k8s-master-02 k8s-master-03 k8s-node-01 k8s-node-02; do ssh-copy-id -i /root/.ssh/id_rsa.pub $i;done
 
+注意：k8s-master-01作为管理节点免密钥登录其它节点，安装过程中生成配置文件和证书，均在k8s-master-01上操作，集群管理也在k8s-master-01上进行。如果使用的是阿里云或者AWS，其后端服务器是不能反向连接SLB的，所以需要单独一台kubectl服务器。
+
 第二部分：内核配置
 
 更新并重启机器，排除内核信息
@@ -138,6 +144,7 @@ grubby --default-kernel
 yum install ipvsadm ipset sysstat conntrack libseccomp -y
 
 所有内核节点配置ipvs模块，4.19+版本内核需要把nf_conntrack_ipv4更改为nf_conntrack，4.18及以下可以继续使用。
+
 vim /etc/modules-load.d/ipvs.conf
 //添加
 ip_vs
@@ -197,6 +204,8 @@ EOF
 
 sysctl --system
 
+注意：net.ipv4.ip_forward一定要打开，否则跨主机的通讯是不通的。
+
 重启后进行验证
 lsmod | grep -e ip_vs -e nf_conntrack
 ip_vs_ftp              16384  0
@@ -219,7 +228,7 @@ libcrc32c              16384  4 nf_conntrack,nf_nat,xfs,ip_vs
 
 第四部分：docker以及kubenetes组件安装
 
-安装docker
+安装docker 19.03.*
 yum install docker-ce-19.03.* -y
 
 修改cgroup运行方式
@@ -232,7 +241,9 @@ EOF
 
 systemctl daemon-reload && systemctl enable --now docker
 
-安装k8s组件
+注意：由于新版kubelet建议使用systemd，可以把docker的CgroupDriver更改为systemd。
+
+安装k8s组件（kubeadm方式）
 
 注意，版本号后面小版本大于5时再去选择使用该版本运行在生产环境中，例如1.18.9、1.19.5这样版本，尽量不要选择如1.19.1、1.18.3这样的版本。
 
@@ -252,6 +263,11 @@ EOF
 
 配置开机启动。未初始化之前可能存在启动失败的问题，临时不需要关心，由于kubelet没有配置文件，所以无法启动，待初始化后可用
 systemctl daemon-reload && systemctl enable --now kubelet
+
+**安装k8s组件（二进制方式）**
+
+
+
 
 第五部分：高可用组件安装
 
@@ -1237,8 +1253,10 @@ kube-scheduler-k8s-master-03               1/1     Running   0          3h35m
 第7部分：metrics和dashboard的安装
 
 执行metrics安装之前，需要先把下面配置文件中的证书拷贝到其它节点，否则会存在找不到证书的情况
-for i in k8s-master-02 k8s-master-03 k8s-node-01 k8s-node-02; do scp /etc/kubernetes/pki/front-proxy-ca.crt $i:/etc/kubernetes/pki/front-proxy-ca.crt ;done
 
+```
+for i in k8s-master-02 k8s-master-03 k8s-node-01 k8s-node-02; do scp /etc/kubernetes/pki/front-proxy-ca.crt $i:/etc/kubernetes/pki/front-proxy-ca.crt ;done
+```
 
 metrics的配置文件如下：
 
@@ -5674,17 +5692,1467 @@ tmpfs                            tmpfs    2.0G     0  2.0G   0% /sys/firmware
 2. PVC的StorageClassName没有和PV中设定的一致
 3. PVC的访问模式accessModes和PV中设定的不一致
 
-- 创建挂在了PVC的Pod之后，一直处于Pending状态
+- 创建挂载了PVC的Pod之后，一直处于Pending状态
 
-1. PVC没有创建成功，或者被创建
+1. PVC没有创建成功，或者没有被创建
 2. PVC和Pod不在同一个namespace下
 
-删除时，必须先删除PV再删除PVC，如果先删除PVC，PV会一直处于Terminal状态，导致容器删不掉的情况。
+存储删除时，如果要删除PVC，必须要先删除挂载该PVC的容器或者Deployment，之后再删除该PVC，否则PVC一直处于Terminal状态。
 
-如果要删除PVC，必须将所有使用PVC的容器删掉。
+如果删除了PVC，再删除Pod，将会导致Deployment下的pod重新上线时，一直处在pending的状态，无法找到该PVC，也就无法挂载，导致Pod无法重新启动。这时候，PVC删除会出现超时的情况。
 
-PVC有namespace的区分，PV则是全局存在的。
+如果出现了上述情况，还要删除PVC，那么必须先删除使用该PVC的容器，因为PVC被删掉后，容器的运行状态不正常，无法对外提供服务。
 
-Recycle模式下，回收PV时，会主动创建一个回收镜像来进行回收操作。删除PVC以后，k8s或创建一个用于回收的Pod，根据PV的回收策略进行PV的回收，回收完以后，PV的状态就会变成可被绑定的状态，也就是空闲状态，其它Pending状态的PVC如果匹配到这个PV，就可以和这个PV进行绑定。
+删除时，必须先删除PV再删除PVC，如果先删除PVC，必须要把挂载该PVC的容器或者deployment删掉，
 
-PV支持selector标签挂载。
+- PVC有namespace的区分，PV则是全局存在的。
+
+- Recycle模式下，回收PV时，会主动创建一个回收镜像来进行回收操作。删除PVC以后，k8s或创建一个用于回收的Pod，根据PV的回收策略进行PV的回收，回收完以后，PV的状态就会变成可被绑定的状态，也就是空闲状态，其它Pending状态的PVC如果匹配到这个PV，就可以和这个PV进行绑定。
+
+注意：PVC在任意一个namespace下都可以和对应的PV进行绑定。
+
+- PV支持selector标签挂载。
+
+- 自定义存储CSI的使用（待补充）
+
+2.14.6 cronjob计划任务
+
+在k8s里面运行周期性的计划任务，类型linux上的crontab。
+
+- "* * * * * 分 时 日 月 周"的编写方式，同crontab
+
+- 计划任务可能需要调用应用的接口，可能需要依赖某些环境，例如php中运行cronjob，不需要在宿主机安装php环境，直接借助php的docker镜像（但是拉取镜像需要时间，需要考虑cronjob的运行调度）
+
+- cronjob被调用的时间，同controller-manager的时间一致。如果controller-manager是二进制进行启动，其时间和宿主机一致。如果部署在容器中，要保证容器的时间是正确的。
+
+**注意：**cronjob的名字不能超过52个字符，创建时，会在该名称后面添加11个字符，如果超过63个字符，名称会过长导致不能解析该名称。
+
+下面开始演示cronjob的编写方式。
+
+```yaml
+
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: "*/2 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+          restartPolicy: OnFailure
+
+```
+
+
+```
+# kubectl apply -f busybox-cronjob.yaml
+
+# kubectl get cj hello
+NAME    SCHEDULE      SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+hello   */2 * * * *   False     1        5s              10s
+
+// 查看创建后的cronjob信息
+# kubectl get cj hellp -oyaml
+
+```
+
+查看具体的cronjob配置信息如下：
+
+```yaml
+
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: hello
+  namespace: default
+spec: 
+  concurrencyPolicy: Allow  # 并发调度控制，Allow：允许同时运行多个任务；Forbid：不进行并发执行多个任务；Replace：替换之前的任务
+  failedJobsHistoryLimit: 1  # 保留失败的任务数，可以按需设置较大的数值，看到为何执行出错的问题
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      template:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+          - command:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+            image: busybox
+            imagePullPolicy: IfNotPresent
+            name: hello
+            resources: {}
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: OnFailure
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+  schedule: '*/2 * * * *'   # 调度策略
+  successfulJobsHistoryLimit: 3  # 成功的job保留的次数
+  suspend: false  # 任务挂起，true，cronjob不会被执行
+  startingDeadlineSeconds: 30 # 在30秒内失败后会继续重新调用执行该cronjob，直到成功执行为止
+status:
+  lastScheduleTime: "2021-03-07T01:58:00Z"
+
+```
+
+最后，需要查看cronjob的执行内容，如下：
+
+```
+# kubectl get pod
+NAME                          READY   STATUS      RESTARTS   AGE
+hello-1615082760-wpkzd        0/1     Completed   0          6m
+hello-1615082880-gvqg2        0/1     Completed   0          4m
+hello-1615083000-vzhc6        0/1     Completed   0          119s
+
+# kubectl logs -f hello-1615083000-vzhc6
+Sun Mar  7 02:10:05 UTC 2021
+Hello from the Kubernetes cluster
+
+```
+
+
+**注意：**1. cronjob有namespace隔离的概念。2. pod随着执行完成的job，保留的数量有限，在查看执行结果前要想查看该pod是否还存在。
+
+
+2.14.7 Taint & Toleration
+
+类比NodeSelector的内容。
+
+污点和容忍的理念
+
+Taint：在一类服务器上打上污点，让不能容忍这个污点的Pod不能部署在打了污点的服务器上。
+
+例如Master节点不应该部署系统Pod之外的任何Pod上。可以用Taint进行打污点，每个节点可以打多个污点。
+
+举例子如下：
+
+某个Node机器上存在*gpu-server:true*的Taint污点存在，该节点只能部署容忍该污点的容器存在，而这时某个Pod上添加了一个Toleration满足*gpu-server:true*，才能部署到这个Node机器上。
+
+*taint的结构为： key=value:effect*。
+
+在没打污点之前，查看一下各个Pod在k8s中的部署情况
+
+```
+# kubectl get pod -o wide
+NAME                          READY   STATUS      RESTARTS   AGE     IP                NODE            NOMINATED NODE   READINESS GATES
+busybox                       1/1     Running     163        48d     172.163.98.171    k8s-node-02     <none>           <none>
+hello-1615085760-6mx25        0/1     Completed   0          5m56s   172.165.176.216   k8s-master-02   <none>           <none>
+hello-1615085880-x2x4r        0/1     Completed   0          3m56s   172.164.183.161   k8s-master-03   <none>           <none>
+hello-1615086000-hbbzz        0/1     Completed   0          115s    172.164.183.162   k8s-master-03   <none>           <none>
+mypod                         0/1     Completed   0          40d     172.175.44.56     k8s-node-01     <none>           <none>
+mypod-multi                   0/1     Completed   0          40d     172.175.44.57     k8s-node-01     <none>           <none>
+mypod-secret                  0/1     Completed   0          39d     172.175.44.61     k8s-node-01     <none>           <none>
+mypod-volume                  0/1     Completed   0          40d     172.175.44.58     k8s-node-01     <none>           <none>
+nginx-6976f57754-75chk        2/2     Running     6          6d23h   172.163.98.187    k8s-node-02     <none>           <none>
+nginx-6976f57754-8fjzp        2/2     Running     6          6d23h   172.174.107.71    k8s-master-01   <none>           <none>
+nginx-6976f57754-rp6p5        2/2     Running     6          6d23h   172.175.44.19     k8s-node-01     <none>           <none>
+nginx-app-d87589bdc-bqpff     1/1     Running     71         24d     172.175.44.60     k8s-node-01     <none>           <none>
+nginx-app-d87589bdc-jsc9r     1/1     Running     71         24d     172.163.98.175    k8s-node-02     <none>           <none>
+tomcat-app-866957f847-cth22   1/1     Running     1          41d     172.175.44.2      k8s-node-01     <none>           <none>
+tomcat-app-866957f847-z87bw   1/1     Running     1          41d     172.163.98.176    k8s-node-02     <none>           <none>
+
+```
+
+可以看到k8s-master-01上有部署的业务Pod。在master节点打一个污点如下：
+
+```
+# kubectl taint node k8s-master-01 master-test=test:NoSchedule 
+
+```
+
+**注意：**NoSchedule：只是让该节点不会被调度，无法进行强制迁移；
+
+```
+# kubectl edit deploy nginx
+
+......
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      # 添加下面的nodeSelector信息
+      nodeSelector:
+        kubernetes.io/hostname: k8s-master-01
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+
+......
+
+# kubectl get pod -o wide
+
+NAME                          READY   STATUS      RESTARTS   AGE     IP                NODE            NOMINATED NODE   READINESS GATES
+
+nginx-7bd9f58674-w5fnp        0/2     Pending     0          3m22s   <none>            <none>          <none>           <none>
+
+# kubectl describe pod  nginx-7bd9f58674-w5fnp
+......
+Events:
+  Type     Reason            Age    From               Message
+  ----     ------            ----   ----               -------
+  Warning  FailedScheduling  4m46s  default-scheduler  0/5 nodes are available: 1 node(s) had taint {master-test: test}, that the pod didn't tolerate, 4 node(s) didn't match Pod's node affinity.
+  Warning  FailedScheduling  4m46s  default-scheduler  0/5 nodes are available: 1 node(s) had taint {master-test: test}, that the pod didn't tolerate, 4 node(s) didn't match Pod's node affinity.
+
+```
+
+可以看到pod上没有master-test: test没有这个Toleration，不符合k8s-master-01节点上刚刚设置的Taint，导致pod无法被部署。
+
+重新修改deploy，添加toleration测试：
+
+```
+# kubectl edit deploy nginx
+
+......
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      # 添加下面的nodeSelector信息
+      nodeSelector:
+        kubernetes.io/hostname: k8s-master-01
+      tolerations:
+      - key: "master-test"
+        value: "test"
+        effect: "NoSchedule"
+        operator: "Equal"
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+
+......
+
+# kubectl get pod -o wide
+NAME                          READY   STATUS        RESTARTS   AGE     IP                NODE            NOMINATED NODE   READINESS GATES
+nginx-6976f57754-75chk        2/2     Terminating   7          6d23h   172.163.98.187    k8s-node-02     <none>           <none>
+nginx-6976f57754-8fjzp        2/2     Terminating   7          6d23h   172.174.107.71    k8s-master-01   <none>           <none>
+nginx-6976f57754-rp6p5        2/2     Terminating   7          6d23h   172.175.44.19     k8s-node-01     <none>           <none>
+nginx-6dfccfcb68-dct2p        2/2     Running       0          8s      172.174.107.73    k8s-master-01   <none>           <none>
+nginx-6dfccfcb68-fm26r        2/2     Running       0          6s      172.174.107.74    k8s-master-01   <none>           <none>
+nginx-6dfccfcb68-vkvcx        2/2     Running       0          10s     172.174.107.72    k8s-master-01   <none>           <none>
+
+# kubectl describe pod nginx-6dfccfcb68-vkvcx 
+......
+Tolerations:     master-test=test:NoSchedule
+                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                 node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  60s   default-scheduler  Successfully assigned default/nginx-6dfccfcb68-vkvcx to k8s-master-01
+  Normal  Pulled     60s   kubelet            Container image "nginx:1.16.1" already present on machine
+  Normal  Created    59s   kubelet            Created container nginx
+  Normal  Started    59s   kubelet            Started container nginx
+  Normal  Pulled     59s   kubelet            Container image "nginx:1.15.2" already present on machine
+  Normal  Created    59s   kubelet            Created container nginx2
+  Normal  Started    59s   kubelet            Started container nginx2
+
+```
+
+可以看到添加toleration以后，nginx的pod全部调度到k8s-master-01节点上。
+
+```yaml
+      tolerations:
+      - key: "master-test"
+        value: "test"
+        effect: "NoSchedule"
+        operator: "Equal"
+```
+
+effect参数信息：
+
+- NoSchedule：禁止调度
+- NoExecute：如果不符合这个污点，会立刻被驱逐
+
+```yaml
+      tolerations:
+      - key: "master-test"
+        value: "test"
+        effect: "NoExecute"
+        operator: "Equal"
+        tolerationSeconds: 60 # 在节点上允许的停留时间，超过这个时间还是要被驱逐
+```
+
+- PreferNoSchedule：尽量避免将Pod调度到指定的节点上（软污点，非强制性的）
+
+operator参数信息：
+
+- Equal：完全匹配key、value、effect这三个taint才能被调度。
+- Exists：
+
+```yaml
+
+# 只要匹配到key和effect都可以容忍，不管value是多少
+      tolerations:
+      - key: "master-test"
+        effect: "NoSchedule"
+        operator: "Exists"
+
+# 或者如下所示，容忍所有的taint
+      tolerations:
+      - operator: "Exists"
+
+# 或者如下所示，只要节点存在matest-test的key，容忍匹配的taint
+      tolerations:
+      - operator: "Exists"
+        key: "master-test"
+
+```
+
+如果node节点有多个Taint，在Pod/Deployment上设置每个Taint都需要容忍才能部署到该node上。
+
+删除污点的操作如下：
+
+```
+# kubectl taint node k8s-master-01 master-test:NoExecute-
+node/k8s-master-01 untainted
+
+```
+
+当某个节点不正常时，k8s中master会自动给不正常的节点，添加几个Taint。通过describe命令可以查看，排查节点问题。
+
+```
+
+# kubectl describe node k8s-master-01
+
+node.kubernetes.io/unreachable:NoExecute
+node.kubernetes.io/unreachable:NoSchedule
+
+node.kubernetes.io/not-ready:NoExecute for 300s   # 节点没有准备好
+node.kubernetes.io/unreachable:NoExecute for 300s
+
+```
+
+参考连接：https://www.cnblogs.com/tylerzhou/p/11026364.html
+
+周国通系列文章：https://www.cnblogs.com/tylerzhou/p/10969041.html
+
+2.14.8 InitContainer初始化容器
+
+在我们应用容器启动之前做的一些初始化操作。例如：初始化环境，执行一些内核变更的命令。保证一定会在容器启动之前运行。
+
+postStart：在容器启动之前做一些操作。不能保证在你的container的EntryPoint之前运行。
+
+可以指定多个initContainer，只有上面的运行成功之后，才能运行下一个container。当所有的initContainers执行完毕后，它才会运行真正要部署的container。
+
+```
+
+$ kubectl edit deploy nginx
+
+// 修改如下内容
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nginx
+    spec:
+      // 添加初始化容器的内容，向容器文件中添加内容
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - echo "InitAllContainers" >> /mnt/init
+        image: nginx
+        imagePullPolicy: IfNotPresent
+        name: init1
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /mnt
+          name: share-volume
+
+      containers:
+      - image: nginx:1.16.1
+        imagePullPolicy: I
+
+。。。。。
+
+```
+
+在容器三次初始化时，会发现往文件中追加了三次写入！
+
+
+2.14.9 Affinity亲和力
+
+1. NodeAffinity: 节点亲和力
+   
+   - requiredDuringSchedulingIgnoredDuringExecution：硬亲和力，必须。既支持必须部署在指定节点上，也支持必须不部署在指定的节点上。
+   - preferredDuringSchedulingIgnoredDuringExecution：软亲和力，尽量。尽量部署在满足条件的节点上，尽量不要部署在被匹配的节点。
+
+nodeSelector仅仅支持部署在指定节点上，不支持必须不部署在指定节点上。
+
+2. PodAffinity：Pod亲和力
+
+    A应用、B应用、C应用，将A应用根据某种策略尽量部署在一块。使用Label进行区分
+
+    - requiredDuringSchedulingIgnoredDuringExecution：将A应用和B应用部署在一块
+    - preferredDuringSchedulingIgnoredDuringExecution：尽量将A应用和B应用部署在一块
+
+3. PodAntiAffinity：Pod反亲和力
+
+    A应用、B应用、C应用，将A应用根据某种策略尽量不部署在一块。
+
+    - requiredDuringSchedulingIgnoredDuringExecution：不要将A应用和与之匹配的应用部署在一块
+    - preferredDuringSchedulingIgnoredDuringExecution：尽量不要将A应用和与之匹配的应用部署在一块
+
+如果集群节点数超过1000，不建议使用该方式进行调度，由于需要计算的关系，会导致调度时间过长。优化的方式是，减少调度的节点，也就是对部分节点进行调度，这样可以加快调度的速度，而且不影响其它节点的运行。
+
+2.14.9.1 Affinity实例，节点亲和力演示
+
+对node节点打label，实现Pod的亲和性部署。
+
+首先对节点打label如下:
+
+```
+
+# kubectl label node k8s-node-02  kubernetes.io/e2e-az-name=e2e-az1
+node/k8s-node-02 labeled
+
+# kubectl label node k8s-node-01  kubernetes.io/e2e-az-name=e2e-az2
+node/k8s-node-01 labeled
+
+# kubectl label node k8s-master-01 another-node-label-key=another-node-label-value
+node/k8s-master-01 labeled
+
+# kubectl label node k8s-node-01 another-node-label-key=another-node-label-value
+node/k8s-node-01 labeled
+
+```
+
+编辑nginx deploy信息，添加亲和性内容，如下：
+
+```yaml
+# kubectl get deploy nginx-app -o yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 4
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: nginx
+    spec:
+      # 在template下的spec下添加affinity的相关内容
+      # 作用于Pod上
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/e2e-az-name
+                operator: In
+                values:
+                - e2e-az1
+                - e2e-az2
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: another-node-label-key
+                operator: In
+                values:
+                - another-node-label-value  
+      containers:
+      - command:
+        - sh
+        - -c
+        - sleep 3600
+        image: nginx
+        imagePullPolicy: Always
+        name: nginx
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/nginx/nginx.conf
+          name: config-volume
+          subPath: etc/nginx/nginx.conf
+        - mountPath: /mnt/
+          name: config-volume-non-subpath
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: nginx.conf
+            path: etc/nginx/nginx.conf
+          name: nginx-conf
+        name: config-volume
+      - configMap:
+          defaultMode: 420
+          name: nginx-conf
+        name: config-volume-non-subpath
+
+```
+
+规则解释如下：
+
+所有该deploy下的pod，全部要部署在包含kubernetes.io/e2e-az-name=e2e-az1和kubernetes.io/e2e-az-name=e2e-az2两个标签的节点上，更倾向于部署在含有another-node-label-key=another-node-label-value标签的节点上。也就是根据前面对node的设置，要求部署在k8s-node-01和k8s-node-02两个节点的范围内，更倾向于部署在k8s-node-01或者k8s-master-01两个节点上。但是实际能否部署到k8s-master-01上，需要实际操作验证。
+
+编辑完成后，进行替换操作，如下
+
+```
+# kubectl replace -f affinity.yaml
+deployment.apps/nginx-app replaced
+
+# kubectl get pod -o wide | grep nginx-app
+// 全部部署到k8s-node-01这个节点上
+nginx-app-59c7b95cb9-tdfmh    1/1     Running     0          98s     172.175.44.24     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-xz6q6    1/1     Running     0          76s     172.175.44.25     k8s-node-01     <none>           <none>
+
+
+// 扩展replicas为20，查看内容
+# kubectl get pod -o wide | grep nginx-app
+nginx-app-59c7b95cb9-254nn    1/1     Running     0          6m29s   172.175.44.32     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-7xhrj    1/1     Running     0          6m29s   172.175.44.13     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-htr5p    1/1     Running     0          6m29s   172.175.44.23     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-jh7gz    1/1     Running     0          6m29s   172.175.44.28     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-lpfvh    1/1     Running     0          6m29s   172.175.44.29     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-m78zq    1/1     Running     0          6m29s   172.175.44.22     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-s296k    1/1     Running     0          6m29s   172.175.44.27     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-tdfmh    1/1     Running     0          9m57s   172.175.44.24     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-xm22h    1/1     Running     0          6m29s   172.175.44.14     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-xz6q6    1/1     Running     0          9m35s   172.175.44.25     k8s-node-01     <none>           <none>
+
+// 删除k8s-node-01的标签信息
+# kubectl label node k8s-node-01 another-node-label-key-
+node/k8s-node-01 labeled
+
+// 删除几个pod触发生效
+# kubectl delete pod nginx-app-59c7b95cb9-m78zq nginx-app-59c7b95cb9-xm22h nginx-app-59c7b95cb9-7xhrj
+pod "nginx-app-59c7b95cb9-m78zq" deleted
+pod "nginx-app-59c7b95cb9-xm22h" deleted
+pod "nginx-app-59c7b95cb9-7xhrj" deleted
+
+// 删除后重新部署，发现被删除的三个pod转移到了k8s-node-02上
+# kubectl get pod -o wide  | grep nginx-app                                                       nginx-app-59c7b95cb9-254nn    1/1     Running             0          9m53s   172.175.44.32     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-7xhrj    1/1     Terminating         0          9m53s   172.175.44.13     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-htr5p    1/1     Running             0          9m53s   172.175.44.23     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-jh7gz    1/1     Running             0          9m53s   172.175.44.28     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-ljxqb    0/1     ContainerCreating   0          14s     <none>            k8s-node-02     <none>           <none>
+nginx-app-59c7b95cb9-lpfvh    1/1     Running             0          9m53s   172.175.44.29     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-m78zq    1/1     Terminating         0          9m53s   172.175.44.22     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-s296k    1/1     Running             0          9m53s   172.175.44.27     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-tdfmh    1/1     Running             0          13m     172.175.44.24     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-tl6kp    0/1     ContainerCreating   0          14s     <none>            k8s-node-02     <none>           <none>
+nginx-app-59c7b95cb9-w56fb    0/1     ContainerCreating   0          14s     <none>            k8s-node-02     <none>           <none>
+nginx-app-59c7b95cb9-xm22h    1/1     Terminating         0          9m53s   172.175.44.14     k8s-node-01     <none>           <none>
+nginx-app-59c7b95cb9-xz6q6    1/1     Running             0          12m     172.175.44.25     k8s-node-01     <none>           <none>
+
+
+```
+
+这里操作证明，虽然k8s-master-01上带有another-node-label-key=another-node-label-value这个标签，但是pod依然不会部署到k8s-master-01节点上，说明了在满足requiredDuringSchedulingIgnoredDuringExecution强制要求后，再尽量满足preferredDuringSchedulingIgnoredDuringExecution要求。
+
+operator解释
+
+1. In：部署在满足所列举的多个条件的节点。
+2. NotIn：不要部署在满足所列举的多个条件的节点。
+
+```yaml
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/e2e-az-name
+                operator: NotIn
+                values:
+                - e2e-az1
+                - e2e-az2
+```
+
+3. Exists：部署在存在特定key值的节点上，只要存在该key即可。
+
+```yaml
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/e2e-az-name
+                operator: Exists
+                
+```
+
+4. DoesNotExists：部署在不存在特定key值的节点上。
+
+```yaml
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/e2e-az-name
+                operator: DoesNotExists
+                
+```
+
+5. Gt：大于指定的条件
+
+
+```yaml
+# kubectl label node k8s-node-01 test.gt=a
+node/k8s-node-01 labeled
+
+# kubectl label node k8s-node-02 test.gt=b
+node/k8s-node-02 labeled
+
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: test.gt
+                operator: Gt
+                values:
+                - "20"
+```
+
+6. Lt：小于指定的条件
+
+```yaml
+# kubectl label node k8s-node-01 test.gt=a
+node/k8s-node-01 labeled
+
+# kubectl label node k8s-node-02 test.gt=b
+node/k8s-node-02 labeled
+
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: test.gt
+                operator: Lt
+                values:
+                - "20"
+```
+
+注意：Gt和Lt在使用的时候不要使用字符串进行比较，在使用数字比较时，values下的数字要用引号包裹。
+
+上面都是以require为例讲解的，preferred也基本相同，只是多了个weight，内部以preference开头
+
+```
+
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: another-node-label-key
+                operator: In
+                values:
+                - another-node-label-value  
+
+```
+
+2.14.9.2 Affinity实例，容器亲和力演示
+
+在系统中已经存在busybox这个pod，演示如何将nginx-app相关的pod和busybox所在pod进行亲和性部署。
+
+```
+# kubectl label node k8s-node-01 busybox=OnSuccess
+node/k8s-node-01 labeled
+
+// 部署busybox
+# vim busybox.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: affinity-busybox
+  namespace: default
+  labels:
+    region: beijing
+spec:
+  nodeSelector:
+    busybox: OnSuccess
+  containers:
+  - command:
+    - sleep
+    - "3600"
+    image: busybox:1.28
+    imagePullPolicy: IfNotPresent
+    name: busybox
+
+# kubectl apply -f busybox.yaml
+
+# kubectl get po -o wide --show-labels | grep busybox
+NAME                          READY   STATUS      RESTARTS   AGE     IP                NODE            NOMINATED NODE   READINESS GATES   LABELS
+affinity-busybox              1/1     Running     0          8m22s   172.175.44.53     k8s-node-01     <none>           <none>            region=beijing
+
+# kubectl get po -o wide | grep nginx-app
+nginx-app-6c86b96794-chtmq    1/1     Running     2          132m    172.163.98.132    k8s-node-02     <none>           <none>
+nginx-app-6c86b96794-pvnms    1/1     Running     2          132m    172.163.98.138    k8s-node-02     <none>           <none>
+nginx-app-6c86b96794-wdk6m    1/1     Running     2          132m    172.163.98.129    k8s-node-02     <none>           <none>
+
+```
+
+根据busybox上所属的label，来进行亲和性部署，设置如下：
+
+```yaml
+# kubectl get deploy nginx-app -o yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: nginx
+    spec:
+      # 在template下的spec下添加affinity的相关内容
+      # 作用于Pod上
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: region
+                operator: In
+                values:
+                - beijing
+            topologyKey: kubernetes.io/hostname
+        # podAntiAffinity:
+        #   preferredDuringSchedulingIgnoredDuringExecution:
+        #   - weight: 100
+        #     podAffinityTerm:
+        #       labelSelector:
+        #         matchExpressions:
+        #         - key: security
+        #           operator: In
+        #           values:
+        #           - S2
+        #       topologyKey: kubernetes.io/hostname 
+      containers:
+      - command:
+        - sh
+        - -c
+        - sleep 3600
+        image: nginx
+        imagePullPolicy: Always
+        name: nginx
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/nginx/nginx.conf
+          name: config-volume
+          subPath: etc/nginx/nginx.conf
+        - mountPath: /mnt/
+          name: config-volume-non-subpath
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: nginx.conf
+            path: etc/nginx/nginx.conf
+          name: nginx-conf
+        name: config-volume
+      - configMap:
+          defaultMode: 420
+          name: nginx-conf
+        name: config-volume-non-subpath
+
+```
+使上述信息生效，如下：
+
+```
+# kubectl replace -f pod-affinity.yaml
+
+# kubectl get po -o wide | grep nginx-app
+nginx-app-76c66bbf84-rnfqb    1/1     Running     0          4m25s   172.175.44.62     k8s-node-01     <none>           <none>
+nginx-app-76c66bbf84-trlc4    1/1     Running     0          4m25s   172.175.44.63     k8s-node-01     <none>           <none>
+
+
+```
+可以看到nginx-app下的所有pod都被部署在了k8s-node-01节点，该节点也是busybox所在的节点。这样就实现了pod的亲和性部署。
+
+*注意：*和指定pod部署在一起，是可以跨namespace存在的。跨namespace部署，这里演示和metrics-server-545b8b99c6-tfkll这个pod亲和部署的内容
+
+```
+# kubectl get pod -n kube-system -o wide --show-labels| grep metrics-server
+metrics-server-545b8b99c6-tfkll            1/1     Running   50         76d   172.163.98.173   k8s-node-02     <none>           <none>            k8s-app=metrics-server,pod-template-hash=545b8b99c6
+
+```
+
+```yaml
+
+# kubectl get deploy nginx-app -o yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: nginx
+    spec:
+      # 在template下的spec下添加affinity的相关内容
+      # 作用于Pod上
+      # 把nginx-app部署在和（kube-system namesapce下的label为k8s-app=metrics-server的pod）所在节点（拓扑域）上
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: k8s-app
+                operator: In
+                values:
+                - metrics-server
+            # 如果写了namespace的字段但是留空了
+            #namespaces:
+            # 
+            # 匹配所有namespace下的所有符合label的pod所在节点
+            # 如果指定了值，就是匹配namespace下的指定的Pod。
+            # 如果没有写namespace，则匹配当前namespace
+            namespaces:
+            - kube-system
+            topologyKey: kubernetes.io/hostname
+        # podAntiAffinity:
+        #   preferredDuringSchedulingIgnoredDuringExecution:
+        #   - weight: 100
+        #     podAffinityTerm:
+        #       labelSelector:
+        #         matchExpressions:
+        #         - key: security
+        #           operator: In
+        #           values:
+        #           - S2
+        #       topologyKey: kubernetes.io/hostname 
+      containers:
+      - command:
+        - sh
+        - -c
+        - sleep 3600
+        image: nginx
+        imagePullPolicy: Always
+        name: nginx
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/nginx/nginx.conf
+          name: config-volume
+          subPath: etc/nginx/nginx.conf
+        - mountPath: /mnt/
+          name: config-volume-non-subpath
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: nginx.conf
+            path: etc/nginx/nginx.conf
+          name: nginx-conf
+        name: config-volume
+      - configMap:
+          defaultMode: 420
+          name: nginx-conf
+        name: config-volume-non-subpath
+
+```
+
+反亲和性测试，配置文件如下：
+
+````yaml
+
+# kubectl get deploy nginx-app -o yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: nginx
+    spec:
+      # 在template下的spec下添加affinity的相关内容
+      # 作用于Pod上
+      # 把nginx-app部署在和（kube-system namesapce下的label为k8s-app=metrics-server的pod）所在节点（拓扑域）上
+      affinity:
+        # 只是在这个位置配置了反亲和性
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: k8s-app
+                operator: In
+                values:
+                - metrics-server
+            # 如果写了namespace的字段但是留空了
+            #namespaces:
+            # 
+            # 匹配所有namespace下的所有符合label的pod所在节点
+            # 如果指定了值，就是匹配namespace下的指定的Pod。
+            # 如果没有写namespace，则匹配当前namespace
+            namespaces:
+            - kube-system
+            topologyKey: kubernetes.io/hostname
+        # podAntiAffinity:
+        #   preferredDuringSchedulingIgnoredDuringExecution:
+        #   - weight: 100
+        #     podAffinityTerm:
+        #       labelSelector:
+        #         matchExpressions:
+        #         - key: security
+        #           operator: In
+        #           values:
+        #           - S2
+        #       topologyKey: kubernetes.io/hostname 
+      containers:
+      - command:
+        - sh
+        - -c
+        - sleep 3600
+        image: nginx
+        imagePullPolicy: Always
+        name: nginx
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/nginx/nginx.conf
+          name: config-volume
+          subPath: etc/nginx/nginx.conf
+        - mountPath: /mnt/
+          name: config-volume-non-subpath
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: nginx.conf
+            path: etc/nginx/nginx.conf
+          name: nginx-conf
+        name: config-volume
+      - configMap:
+          defaultMode: 420
+          name: nginx-conf
+        name: config-volume-non-subpath
+
+````
+
+preferredDuringSchedulingIgnoredDuringExecution写法同requiredDuringSchedulingIgnoredDuringExecution，不再演示。
+
+2.14.10 Topology拓扑域
+
+topologyKey：不同的key、不同的value，属于不同的拓扑域。
+
+实际上在之前的亲和力部署中，已经有了topologyKey的信息，更准确的说，部署是部署到拓扑域上所在节点上。进一步说明在以下配置中：
+
+```yaml
+      affinity:
+        # 只是在这个位置配置了反亲和性
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: k8s-app
+                operator: In
+                values:
+                - metrics-server
+            namespaces:
+            - kube-system
+            topologyKey: kubernetes.io/hostname
+
+```
+
+首先找到kubernetes.io/hostname拓扑域信息，根据拓扑域找到满足的所有节点信息。然后在kubecsystem这个命名空间中，找到label为k8s-app=metrics-server所在的pod，通过该pod获取其部署的拓扑域信息，根据该信息找到含有该label的节点，进行部署。
+
+下面进行拓扑域的测试，将三个master节点打上机柜的标签信息，如下
+
+```
+# kubectl label node k8s-master-01 k8s-node-01 jigui=1
+node/k8s-master-01 labeled
+node/k8s-node-01 labeled
+
+# kubectl label node k8s-master-02 k8s-node-02 jigui=2
+node/k8s-master-02 labeled
+node/k8s-node-02 labeled
+
+# kubectl label node k8s-master-03 jigui=3
+node/k8s-master-03 labeled
+
+# kubectl edit deploy nginx-app
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  # 设置为3就是为了演示在每一个机柜中部署一套
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nginx-app
+        name: nginx
+    spec:
+      affinity:
+        podAntiAffinity:
+          # 反亲和性设置，保证在该拓扑域下不同标识的机柜信息中，只部署一个服务
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - nginx-app
+            namespaces:
+            - default
+            # 设置为jigui的拓扑域
+            topologyKey: jigui
+      containers:
+      - command:
+        - sh
+        - -c
+        - sleep 3600
+        image: nginx
+        imagePullPolicy: Always
+        name: nginx
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/nginx/nginx.conf
+          name: config-volume
+          subPath: etc/nginx/nginx.conf
+        - mountPath: /mnt/
+          name: config-volume-non-subpath
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: nginx.conf
+            path: etc/nginx/nginx.conf
+          name: nginx-conf
+        name: config-volume
+      - configMap:
+          defaultMode: 420
+          name: nginx-conf
+        name: config-volume-non-subpath
+
+# kubectl get pod -o wide --show-labels| grep nginx-app
+nginx-app-5768c5dd46-4tsg4    1/1     Running     0          68s     172.164.183.134   k8s-master-03   <none>           <none>            app=nginx-app,name=nginx,pod-template-hash=5768c5dd46
+nginx-app-5768c5dd46-69flt    1/1     Running     0          67s     172.175.44.14     k8s-node-01     <none>           <none>            app=nginx-app,name=nginx,pod-template-hash=5768c5dd46
+nginx-app-5768c5dd46-zrj62    1/1     Running     0          68s     172.163.98.182    k8s-node-02     <none>           <none>            app=nginx-app,name=nginx,pod-template-hash=5768c5dd46
+
+// 尝试扩展到四个服务，将有一个服务产生pending的状态
+# kubectl scale deploy nginx-app -replicas=4
+
+// pending状态
+# kubectl get pod -o wide| grep nginx-app
+nginx-app-9f67b5684-hh86d     1/1     Running     0          7m42s   172.163.98.147    k8s-node-02     <none>           <none>
+nginx-app-9f67b5684-k49gt     0/1     Pending     0          51s     <none>            <none>          <none>           <none>
+nginx-app-9f67b5684-r8qv8     1/1     Running     0          13m     172.164.183.138   k8s-master-03   <none>           <none>
+nginx-app-9f67b5684-rftq2     1/1     Running     0          51s     172.175.44.29     k8s-node-01     <none>           <none>
+
+```
+
+上述就已经部署完成了。针对机柜的拓扑域划分后，每个机柜中只有一个服务。
+
+下面来测试preferred相关的内容，将上述配置信息中的required部分更换，如下：
+
+```yaml
+    ...
+    spec:
+      affinity:
+        podAntiAffinity:
+          # 反亲和性设置，保证在该拓扑域下不同标识的机柜信息中，只部署一个服务
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - nginx-app
+              # 设置为jigui的拓扑域
+              topologyKey: jigui
+    ...
+```
+
+部署后的效果为：
+
+```
+# kubectl get pod -o wide| grep nginx-app
+nginx-app-5c5ccd9c8-2678b     1/1     Running       0          101s    172.163.98.161    k8s-node-02     <none>           <none>
+nginx-app-5c5ccd9c8-2cwpz     1/1     Running       0          44s     172.163.98.167    k8s-node-02     <none>           <none>
+nginx-app-5c5ccd9c8-svj72     1/1     Running       0          26s     172.163.98.168    k8s-node-02     <none>           <none>
+
+# kubectl scale deploy nginx-app -replicas=4
+
+# kubectl get pod -o wide| grep nginx-app
+nginx-app-5c5ccd9c8-2678b     1/1     Running     0          9m35s   172.163.98.161    k8s-node-02     <none>           <none>
+nginx-app-5c5ccd9c8-2cwpz     1/1     Running     0          8m38s   172.163.98.167    k8s-node-02     <none>           <none>
+nginx-app-5c5ccd9c8-7dz8l     1/1     Running     0          2m20s   172.164.183.139   k8s-master-03   <none>           <none>
+nginx-app-5c5ccd9c8-9r55z     1/1     Running     0          2m20s   172.175.44.28     k8s-node-01     <none>           <none>
+
+```
+
+2.14.11 临时容器
+
+在微服务调试的背景下，在原有微服务的Pod中，添加一个临时Container，这个Container可以包含我们排查问题所有的工具，例如netstat、ps、top、jstat、jmap等等。
+
+利用Deployment中配置的shareProcessNamespace信息，在k8s 1.16+的版本才能支持。
+
+2.14.11.1 开启临时容器特性
+
+开启临时容器的设置如下:
+
+首先在所有节点，在kubelet服务的配置文件中打开临时容器选项，如下：
+
+```
+# vim /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+# Note: This dropin only works with kubeadm and kubelet v1.11+
+[Service]
+Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
+Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml" --feature.gates="EphemeralContainers=true"
+# This is a file that "kubeadm init" and "kubeadm join" generates at runtime, populating the KUBELET_KUBEADM_ARGS variable dynamically
+EnvironmentFile=-/var/lib/kubelet/kubeadm-flags.env
+# This is a file that the user can use for overrides of the kubelet args as a last resort. Preferably, the user should use
+# the .NodeRegistration.KubeletExtraArgs object in the configuration files instead. KUBELET_EXTRA_ARGS should be sourced from this file.
+EnvironmentFile=-/etc/sysconfig/kubelet
+ExecStart=
+ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS
+
+```
+
+然后修改kubelet.conf文件如下：
+
+```
+# vim /etc/kubernetes/kubelet.conf
+// 在最后追加
+featureGates:
+  EphemeralContainers: true
+
+```
+
+最后重启kubelet服务如下：
+
+```
+# systemctl daemon-reload
+
+# systemctl restart kubelet
+
+// 查看运行情况
+# systemctl status kubelet
+
+# tail -f /var/log/messages
+```
+
+kubelet修改完成后，需要修改kube-proxy服务（如果是二进制安装的情况下），如下：
+
+```
+# vim /usr/lib/systemd/system/kube-proxy.service
+
+[Unit]
+Description=Kubernetes Kube Proxy
+Documentation=https://github.com/kubernetes/kubernetes
+After=network.target
+[Service]
+ExecStart=/usr/local/bin/kube-proxy \
+    --config=/etc/kubernetes/kube-proxy.conf \
+    --feature-gates=EphemeralContainers=true \
+    --v=2
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+
+```
+最后重启kubelet服务如下：
+
+```
+# systemctl daemon-reload
+
+# systemctl restart kube-proxy
+
+// 查看运行情况
+# systemctl status kube-proxy
+
+# tail -f /var/log/messages
+```
+
+kube-proxy修改完成后，需要修改kube-apiserver服务（如果是二进制安装的情况下），在ExecStart最后追加--feature-gates=EphemeralContainers=true即可。
+
+kube-controller-manager、kube-scheduler也是同样修改。
+
+2.14.11.2 演示，使用busybox容器注入到nginx容器中进行排查问题。
+
+
+首先找到创建临时容器的容器信息：
+
+```
+# kubectl get pod -o wide -l app=nginx-app
+NAME                        READY   STATUS    RESTARTS   AGE    IP                NODE            NOMINATED NODE   READINESS GATES
+nginx-app-5c5ccd9c8-2678b   1/1     Running   2          134m   172.163.98.161    k8s-node-02     <none>           <none>
+nginx-app-5c5ccd9c8-2cwpz   1/1     Running   2          133m   172.163.98.167    k8s-node-02     <none>           <none>
+nginx-app-5c5ccd9c8-7dz8l   1/1     Running   2          126m   172.164.183.139   k8s-master-03   <none>           <none>
+nginx-app-5c5ccd9c8-9r55z   1/1     Running   2          126m   172.175.44.28     k8s-node-01     <none>           <none>
+
+
+```
+
+以nginx-app-5c5ccd9c8-2678b容器为例，创建临时容器配置如下:
+
+```json
+
+# vim ephemeral.json
+{
+    "apiVersion": "v1",
+    "kind": "EphemeralContainers",
+    "metadata": {
+            "name": "example-pod"
+    },
+    "ephemeralContainers": [{
+        "command": [
+            "sh"
+        ],
+        "image": "busybox:1.28",
+        "imagePullPolicy": "IfNotPresent",
+        "name": "debugger",
+        "stdin": true,
+        "tty": true,
+        "terminationMessagePolicy": "File"
+    }]
+}
+
+// 保存退出
+
+```
+
+使配置生效如下：
+
+```
+# kubectl replace --raw /api/v1/namespaces/default/pods/nginx-app-5c5ccd9c8-2678b/ephemeralcontainers  -f ephemeral.json
+
+// 使用describe查看生效内容
+# kubectl describe pod nginx-app-5c5ccd9c8-2678b
+
+```
+
+需要注意的是*namespaces*后面设置命名空间信息，在*pods*后添加要连接的容器信息。
+
+可以使用以下命令连接到新的临时容器：
+
+```
+# kubectl attach -it example-pod -c debugger
+
+// 或者更简单的使用exec命令
+
+# kubectl exec -it nginx-app-5c5ccd9c8-2678b -c debugger -- sh
+```
+
+这样进入后就能进行调试操作了。
+
+
+临时容器主要是适用于那些没有任何额外命令的容器，通过临时容器进行额外的操作。
+
+
+2.14.12 RBAC权限管理（需要重新设置）
+
+RBAC基于角色的访问控制，Role-Based Access Control，基于企业内个人角色来管理一些资源的访问方法。
+
+例如，Jenkins。
+
+RBAC中的顶级资源，Role、ClusterRole、RoleBinding、ClusterRoleBinding。
+
+- Role：角色，包含一组权限的规则，没有拒绝规则，只是附加允许。namespace隔离，只作用于命名空间。
+
+- ClusterRole：和Role的区别，Role只作用于命名空间内，ClusterRole作用于整个集群。
+
+设置完上述权限后，需要对角色和权限进行绑定，使用到RoleBinding、ClusterRoleBinding。
+
+- RoleBinding：作用于命名空间内，将ClusterRole或者Role绑定到User、Group、ServiceAccount。
+
+- ClusterRoleBinding：作用于整个集群，将ClusterRole或者Role绑定到User、Group、ServiceAccount。
+
+四种认证资源：ServiceAccount、User、Group、Basic-auth-file。
+
+
+- 基于用户名密码，实现不同用户有不同的权限。
+
+- 基于ServiceAccount实现不同的ServiceAccount有不同的权限。
+
+- 基于basic auth file的方式进行授权（不推荐，需要重启apiserver）
+
+案例：修改dashboard运行时配置
+
+```yaml
+
+# kubectl edit deploy kubernetes-dashboard -n kubernetes-dashboard
+
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: kubernetes-dashboard
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        k8s-app: kubernetes-dashboard
+    spec:
+      containers:
+      - args:
+        - --auto-generate-certificates
+        # 添加授权登录方式
+        - --authentication-mode=basic,token
+        # 修改token失效时间，避免频繁登录
+        - --token-ttl=86400
+        - --namespace=kubernetes-dashboard
+        image: registry.cn-beijing.aliyuncs.com/dotbalo/dashboard:v2.0.4
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+
+```
+

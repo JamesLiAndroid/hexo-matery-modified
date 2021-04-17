@@ -123,12 +123,12 @@ Using generated security password: 6595127a-b2c1-4947-9f73-c17b7a2c7002
 2020-06-10 13:46:59.984  INFO [test-form-rdp,,,] 6 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 20041 (testtp) with context path ''
 2020-06-10 13:46:59.988  INFO [test-form-rdp,,,] 6 --- [           main] .s.c.n.e.s.EurekaAutoServiceRegistration : Updating port to 20041
 2020-06-10 13:46:59.996  INFO [test-form-rdp,,,] 6 --- [           main] c.h.i.form.IcpCloudFormApplication       : Started IcpCloudFormApplication in 58.544 seconds (JVM running for 66.916)
-2020-06-10 13:47:00.017  INFO [test-form-rdp,,,] 6 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-10.0.66.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [subscribe] test-form-rdp.yml+DEFAULT_GROUP+d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e
-2020-06-10 13:47:00.021  INFO [test-form-rdp,,,] 6 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-10.0.66.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [add-listener] ok, tenant=d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e, dataId=test-form-rdp.yml, group=DEFAULT_GROUP, cnt=1
-2020-06-10 13:47:00.021  INFO [test-form-rdp,,,] 6 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-10.0.66.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [subscribe] test-form-rdp+DEFAULT_GROUP+d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e
-2020-06-10 13:47:00.021  INFO [test-form-rdp,,,] 6 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-10.0.66.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [add-listener] ok, tenant=d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e, dataId=test-form-rdp, group=DEFAULT_GROUP, cnt=1
-2020-06-10 13:47:00.022  INFO [test-form-rdp,,,] 6 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-10.0.66.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [subscribe] test-form-rdp-standalone.yml+DEFAULT_GROUP+d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e
-2020-06-10 13:47:00.022  INFO [test-form-rdp,,,] 6 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-10.0.66.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [add-listener] ok, tenant=d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e, dataId=test-form-rdp-standalone.yml, group=DEFAULT_GROUP, cnt=1
+2020-06-10 13:47:00.017  INFO [test-form-rdp,,,] 6 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-192.168.229.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [subscribe] test-form-rdp.yml+DEFAULT_GROUP+d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e
+2020-06-10 13:47:00.021  INFO [test-form-rdp,,,] 6 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-192.168.229.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [add-listener] ok, tenant=d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e, dataId=test-form-rdp.yml, group=DEFAULT_GROUP, cnt=1
+2020-06-10 13:47:00.021  INFO [test-form-rdp,,,] 6 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-192.168.229.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [subscribe] test-form-rdp+DEFAULT_GROUP+d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e
+2020-06-10 13:47:00.021  INFO [test-form-rdp,,,] 6 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-192.168.229.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [add-listener] ok, tenant=d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e, dataId=test-form-rdp, group=DEFAULT_GROUP, cnt=1
+2020-06-10 13:47:00.022  INFO [test-form-rdp,,,] 6 --- [           main] c.a.n.client.config.impl.ClientWorker    : [fixed-192.168.229.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [subscribe] test-form-rdp-standalone.yml+DEFAULT_GROUP+d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e
+2020-06-10 13:47:00.022  INFO [test-form-rdp,,,] 6 --- [           main] c.a.nacos.client.config.impl.CacheData   : [fixed-192.168.229.211_18848-d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e] [add-listener] ok, tenant=d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e, dataId=test-form-rdp-standalone.yml, group=DEFAULT_GROUP, cnt=1
 2020-06-10 13:47:00.032  INFO [test-form-rdp,,,] 6 --- [cd-92cc24bcaf4e] c.a.n.client.config.impl.ClientWorker    : get changedGroupKeys:[]
 2020-06-10 13:47:29.743  INFO [test-form-rdp,,,] 6 --- [cd-92cc24bcaf4e] c.a.n.client.config.impl.ClientWorker    : get changedGroupKeys:[]
 2020-06-10 13:47:59.246  INFO [test-form-rdp,,,] 6 --- [cd-92cc24bcaf4e] c.a.n.client.config.impl.ClientWorker    : get changedGroupKeys:[]
@@ -379,7 +379,7 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
             - name: NACOS_IP
-              value: 10.0.66.211:18848
+              value: 192.168.229.211:18848
             - name: NACOS_NAMESPACE
               value: d79ba2e9-da64-40e8-9dcd-92cc24bcaf4e
             - name: SKYWALKING_NAMESPACE
@@ -414,7 +414,7 @@ sudo yum update
 
 目前可用的稳定版内核为：3.10.0-1062.12.1.el7.x86_64，或者低于该版本的内核信息。
 
-以10.0.66.221机器为例进行查看和修改，首先登陆10.0.66.221，查看已安装的内核信息：
+以192.168.229.221机器为例进行查看和修改，首先登陆192.168.229.221，查看已安装的内核信息：
 
 ```
 $ sudo rpm -qa |grep kernel

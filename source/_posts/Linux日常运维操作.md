@@ -214,7 +214,7 @@ categories: DevOps
         # yum install -y jq
 
         // 13. 安装yum工具
-        # yum install -y yum-utls
+        # yum install -y yum-utils
 
     注意：“-y”代表同意安装该程序，无需在安装时确定
 
@@ -1425,7 +1425,7 @@ sudo yum update
 
 目前可用的稳定版内核为：3.10.0-1062.12.1.el7.x86_64，或者低于该版本的内核信息。
 
-以10.0.66.221机器为例进行查看和修改，首先登陆10.0.66.221，查看已安装的内核信息：
+以192.168.229.221机器为例进行查看和修改，首先登陆192.168.229.221，查看已安装的内核信息：
 
 ```
 $ sudo rpm -qa |grep kernel
@@ -1614,3 +1614,24 @@ scp  -r  /path  username@servername:/path
 $ sed -i 's/\r//' init.sh
 $ sed -i 's/\r//' ssh-keygen-send.sh
 ```
+
+7. 使用yumdownloader对依赖库进行下载
+
+```
+// 创建下载的文件夹
+$ sudo mkdir -p /opt/download-package/
+
+// 如果未安装yum-utils，可以先安装
+$ sudo yum install yum-utils -y
+
+// 查看 yum-utils 软件包有没有 yumdownloader，如果有输出代表可用
+$ sudo rpm -ql yum-utils | grep yumdownloader
+/usr/bin/yumdownloader
+/usr/share/man/man1/yumdownloader.1.gz
+
+// 下载，--resolve：下载依赖，--destdir：指定下载目录， --donwloadonly：只下载不更新
+$ sudo yumdownloader java-1.8.0-openjdk.x86_64 --resolve --destdir=/opt/download-package/ --donwloadonly
+
+```
+
+**注意：**如果openjdk已经安装了，容易导致下载时无法下载相关的依赖信息。
