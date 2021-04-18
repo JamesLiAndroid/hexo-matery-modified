@@ -18,10 +18,10 @@ categories:
 
 import hudson.model.*
   
-def str_view = "icp-cloud-develop"
-def str_new_view = "icp-cloud-212-develop-single"
-def str_search = "icp-cloud-"
-def str_replace = "icp-cloud-212-"
+def str_view = "testcloud-develop"
+def str_new_view = "testcloud-212-develop-single"
+def str_search = "testcloud-"
+def str_replace = "testcloud-212-"
   
 def view = Hudson.instance.getView(str_view)
   

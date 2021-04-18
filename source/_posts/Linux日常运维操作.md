@@ -1357,40 +1357,6 @@ ht-confluence                      v2                  75d3834d330f        27 mi
 
         docker run --restart always --detach --link mysql-confluence:mysql --publish 46004:8080 ht-confluence:v2
 
-
-* jira的用户信息
-
-    1. 管理员信息
-
-    管理员账户：HTCAdmin
-
-    管理员邮箱：lisongyang@123.com
-
-    用户名：HTCAdmin
-
-    密码：123456
-
-    2. 用户信息
-
-    各个用户为名字的汉语拼音字母小写，密码为123456.
-
-* confluence的用户信息
-
-    1. 管理员信息
-
-    全名：HTCAdmin
-
-    管理员邮箱：lsy@123.com
-
-    用户名：htcadmin
-
-    密码：123456
-
-    2. 用户信息
-
-    各个用户为名字的汉语拼音字母小写，密码为123456。
-
-
 * 访问地址
 
 jira：10.0.11.11:46002
