@@ -4101,7 +4101,9 @@ defaultBackend:
     #loadBalancerIP: ""
     loadBalancerSourceRanges: []
     servicePort: 80
-    type: ClusterIP
+    # 修改为NodePort模式
+    #type: ClusterIP
+    type: NodePort
 
   priorityClassName: ""
 
@@ -4145,6 +4147,7 @@ b) hostNetwork 设置为 true
 c) dnsPolicy设置为 ClusterFirstWithHostNet
 d) NodeSelector添加ingress: "true"部署至指定节点
 e) 类型更改为 kind: DaemonSet
+f) service.type改为NodePort
 
 注意：在yaml中写入true时一定要加引号，例如 nginx: "true"。
 
@@ -4239,9 +4242,34 @@ kubectl create -f ingress.yaml
 
 ```
 
-**重大问题：访问504、502错误码的问题**
+*重大问题：访问504、502错误码的问题*
 
+**解决方式**：配置了ClusterIP
 
+```
+  service:
+    annotations: {}
+
+    # clusterIP: ""
+
+    ## List of IP addresses at which the default backend service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    #loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    servicePort: 80
+    type: ClusterIP
+
+```
+
+需要修改为NodePort，并且需要注意的是在访问域名时需要带上ingress服务的端口号。例如：
+
+```
+$ curl http://foo.bar.com:30946
+
+```
 
 注意：多域名配置时，在annotion中设置rewrite时，需要rewrite方式转发的域名写在一个配置文件中，不需要的写在另一个文件中。
 

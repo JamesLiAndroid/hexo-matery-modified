@@ -220,7 +220,7 @@ categories: DevOps
 
     一条命令安装如下：
 
-        # yum install -y wget git unzip net-tools curl vim telnet psmisc  tree sshpass jq
+        # yum install -y wget git unzip net-tools curl vim telnet psmisc  tree sshpass jq yum-utils
 
 ### 2. 用户配置
 
@@ -880,6 +880,8 @@ Bye
 $ mysql -u root -p 
 Enter password:
 
+mysql>  set global validate_password_policy=0;
+
 mysql>  alter user 'root'@'localhost' identified by 'jy@MySQL246';
 
 mysql>  flush privileges;
@@ -1053,7 +1055,7 @@ Redis版本选择Redis 4.0以上版本，因为4.0以上版本可以支持官方
         requirepass <设置密码>
         
         # 监听ip，允许外网连接
-            bind 0.0.0.0
+        bind 0.0.0.0
     
     // 输入:wq保存并退出编辑
 
@@ -1115,13 +1117,13 @@ Redis版本选择Redis 4.0以上版本，因为4.0以上版本可以支持官方
                         echo "Redis stopped"
                 fi
                 ;;
-        restart|force-reload)
+            restart|force-reload)
                 ${0} stop
                 ${0} start
                 ;;
-        *)
+            *)
             echo "Usage: /etc/init.d/redis {start|stop|restart|force-reload}" >&2
-                exit 1
+            exit 1
         esac
 
     // 输入:wq保存并退出编辑
@@ -1601,3 +1603,21 @@ $ sudo yumdownloader java-1.8.0-openjdk.x86_64 --resolve --destdir=/opt/download
 ```
 
 **注意：**如果openjdk已经安装了，容易导致下载时无法下载相关的依赖信息。
+
+8. 编辑/etc/profile文件导致命令not found的问题
+
+```
+
+cat 
+
+
+```
+
+重新配置export PATH信息，中午整理
+
+9. 查看要安装的依赖信息版本
+
+```
+$ sudo yum list available docker-ce --showduplicates
+
+```

@@ -816,7 +816,7 @@ libfastcommon 安装依赖于 gcc 和 perl，故要先安装这两个
 
 ```
 // 在线安装 gcc（安装系统时，选择开发工具安装和安全工具安装后，gcc自动安装）
-$ sudo yum -y install make zlib zlib-devel gcc-c++ libtool  openssl openssl-devel
+$ sudo yum -y install make zlib zlib-devel gcc-c++ libtool  openssl openssl-devel libevent
 
 // 上传已经下载好的libfastcommon安装包
 
@@ -1009,7 +1009,8 @@ fastdfs-nginx-module 和 FastDFS 配置文件修改
 
 $ cd /home/centos/FastDFS/fastdfs-nginx-module-1.22
 
-$ sudo cp http.conf mime.types /etc/fdfs/
+// 这条语句错误，修改如下
+$ sudo cp /home/centos/FastDFS/fastdfs-6.06/conf/http.conf /home/centos/FastDFS/fastdfs-6.06/conf/mime.types /etc/fdfs/
 
 $ cd /home/centos/FastDFS/data/storage
 

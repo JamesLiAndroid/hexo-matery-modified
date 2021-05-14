@@ -274,7 +274,6 @@ $ ./bin/kafka-topics.sh --create --zookeeper 192.168.229.206:21810,192.168.229.2
 
 // 查看已经创建的topic
 $ ./bin/kafka-topics.sh --list --zookeeper 192.168.229.206:21810
-__consumer_offsets
 test
 
 ```
