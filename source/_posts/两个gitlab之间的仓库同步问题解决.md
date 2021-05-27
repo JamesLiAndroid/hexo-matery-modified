@@ -107,7 +107,7 @@ $ mkdir git_repository_sync && virtualenv venv --python=python2.7
 ```
 $ yum install python-setuptools
 
-$ git clone https://github.com/alexvh/python-gitlab3.git
+$ git clone https://github.com/doctormo/python-gitlab3.git
 
 $ cd python-gitlab3
 
@@ -325,6 +325,32 @@ $ ./add_mirror.sh --git --project-name test --mirror ssh://git@192.168.166.202:2
 ```
 
 **注意：**这里使用的ssh格式的地址信息，而不是使用http链接的信息。
+
+**注意：**执行./add_mirror.sh脚本出现的问题
+
+```
+# ./add_mirror.sh --git --project-name studentmanager2 --mirror http://10.0.66.202:8181/icp-cloud/demo-business/express/studentmanage2.git
+
+Resolving gitlab remote.
+
+Traceback (most recent call last):
+
+  File "lib/manage_gitlab_project.py", line 12, in <module>
+
+    raise ImportError("python-gitlab module is not installed.  You probably didn't read the install instructions closely enough.  See docs/prerequisites.md.")
+
+ImportError: python-gitlab module is not installed.  You probably didn't read the install instructions closely enough.  See docs/prerequisites.md.
+
+There was an unknown issue with manage_gitlab_project.py
+
+```
+
+解决方式:
+
+```
+# pip install python-gitlab
+
+```
 
 添加命令执行无错误，即可进行同步，执行如下：
 
