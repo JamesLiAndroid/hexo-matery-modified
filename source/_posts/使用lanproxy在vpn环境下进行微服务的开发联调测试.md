@@ -7,7 +7,7 @@ mathjax: true
 date: 2021-05-26 13:27:34
 password:
 summary:
-tags:
+tags: DevOps
 categories:
 ---
 
@@ -107,12 +107,13 @@ tcp        0      0 0.0.0.0:55593           0.0.0.0:*               LISTEN      
 
 注意这里需要，将最后一个Backend ID映射为本地的微服务所在的端口。这样在访问的时候就能访问到开发机上的端口信息。
 
+**注意：**在每一个新开服务时都需要在这里新增端口信息。
+
 ### 2. 开发机启动lanproxy客户端
 
 在开发机[下载]()并启动lanproxy的客户端，使用带管理员权限的命令行进行启动如下：
 
 ```
-
 $ .\client_windows_amd64.exe -s 192.168.245.22 -p 55590 -k 04d60ab81091446b817f98aff38f9961
 
 
@@ -171,7 +172,9 @@ nohup ./client_linux_amd64 -s SERVER_IP -p SERVER_SSL_PORT -k CLIENT_KEY -ssl tr
 
 可以在nacos中看到注册的微服务信息，而且url为我们设定的ip或者域名，端口号对应我们自己设置的端口号。
 
-总感觉今天写的文章比较水，也不知咋地！
+## 其它问题
+
+目前在甲方的服务器上已经部署了lanproxy服务端，在开发机上启动了甲方VPN工具，最后启动lanproxy的客户端去连接，客户端启动出现了连接不上的情况，日志信息包含“connection timeout”，还是端口开放的问题，具体日志忘记记录了。
 
 ## 参考地址
 

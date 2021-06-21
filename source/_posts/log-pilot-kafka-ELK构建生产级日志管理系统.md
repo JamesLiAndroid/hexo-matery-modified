@@ -913,6 +913,91 @@ spec:
 
 ## 总结
 
+## 补充内容，同样脚本安装ELK，es无法启动
+
+具体日志如下：
+
+```log
+
+[2021-06-16T15:36:48,503][INFO ][o.e.b.BootstrapChecks    ] [10.3.62.53] bound or publishing to a non-loopback address, enforcing bootstrap checks
+[2021-06-16T15:36:48,512][INFO ][o.e.c.c.ClusterBootstrapService] [10.3.62.53] skipping cluster bootstrapping as local node does not match bootstrap requirements: [10.3.62.53:9300]
+[2021-06-16T15:36:48,644][WARN ][o.e.t.TcpTransport       ] [10.3.62.53] exception caught on transport layer [Netty4TcpChannel{localAddress=/10.3.62.53:9300, remoteAddress=/10.3.62.53:47356}], closing connection
+io.netty.handler.codec.DecoderException: javax.net.ssl.SSLHandshakeException: No available authentication scheme
+        at io.netty.handler.codec.ByteToMessageDecoder.callDecode(ByteToMessageDecoder.java:473) ~[netty-codec-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.handler.codec.ByteToMessageDecoder.channelRead(ByteToMessageDecoder.java:281) ~[netty-codec-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:374) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:360) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:352) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1422) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:374) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:360) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:931) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:163) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:700) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.nio.NioEventLoop.processSelectedKeysPlain(NioEventLoop.java:600) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:554) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:514) [netty-transport-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.util.concurrent.SingleThreadEventExecutor$6.run(SingleThreadEventExecutor.java:1050) [netty-common-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74) [netty-common-4.1.43.Final.jar:4.1.43.Final]
+        at java.lang.Thread.run(Thread.java:830) [?:?]    
+Caused by: javax.net.ssl.SSLHandshakeException: No available authentication scheme
+        at sun.security.ssl.Alert.createSSLException(Alert.java:131) ~[?:?]
+        at sun.security.ssl.Alert.createSSLException(Alert.java:117) ~[?:?]
+        at sun.security.ssl.TransportContext.fatal(TransportContext.java:311) ~[?:?]
+        at sun.security.ssl.TransportContext.fatal(TransportContext.java:267) ~[?:?]
+        at sun.security.ssl.TransportContext.fatal(TransportContext.java:258) ~[?:?]
+        at sun.security.ssl.CertificateMessage$T13CertificateProducer.onProduceCertificate(CertificateMessage.java:955) ~[?:?]
+        at sun.security.ssl.CertificateMessage$T13CertificateProducer.produce(CertificateMessage.java:944) ~[?:?]
+        at sun.security.ssl.SSLHandshake.produce(SSLHandshake.java:440) ~[?:?]
+        at sun.security.ssl.ClientHello$T13ClientHelloConsumer.goServerHello(ClientHello.java:1252) ~[?:?]
+        at sun.security.ssl.ClientHello$T13ClientHelloConsumer.consume(ClientHello.java:1188) ~[?:?]
+        at sun.security.ssl.ClientHello$ClientHelloConsumer.onClientHello(ClientHello.java:851) ~[?:?]
+        at sun.security.ssl.ClientHello$ClientHelloConsumer.consume(ClientHello.java:812) ~[?:?]
+        at sun.security.ssl.SSLHandshake.consume(SSLHandshake.java:396) ~[?:?]
+        at sun.security.ssl.HandshakeContext.dispatch(HandshakeContext.java:444) ~[?:?]
+        at sun.security.ssl.SSLEngineImpl$DelegatedTask$DelegatedAction.run(SSLEngineImpl.java:1260) ~[?:?]
+        at sun.security.ssl.SSLEngineImpl$DelegatedTask$DelegatedAction.run(SSLEngineImpl.java:1247) ~[?:?]
+        at java.security.AccessController.doPrivileged(AccessController.java:691) ~[?:?]
+        at sun.security.ssl.SSLEngineImpl$DelegatedTask.run(SSLEngineImpl.java:1192) ~[?:?]
+        at io.netty.handler.ssl.SslHandler.runAllDelegatedTasks(SslHandler.java:1502) ~[netty-handler-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.handler.ssl.SslHandler.runDelegatedTasks(SslHandler.java:1516) ~[netty-handler-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.handler.ssl.SslHandler.unwrap(SslHandler.java:1400) ~[netty-handler-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.handler.ssl.SslHandler.decodeJdkCompatible(SslHandler.java:1227) ~[netty-handler-4.1.43.Final.jar:4.1.43.Final]
+        at io.netty.handler.ssl.SslHandler.decode(SslHandler.java:1274) ~[netty-handler-4.1.43.Final.jar:4.1.43.Final]
+
+
+```
+
+而且在执行密码设置的时候日志信息如下：
+
+```log
+
+$ sudo /opt/es/bin/elasticsearch-setup-passwords interactive --verbose
+Running with configuration path: /opt/es/config
+
+Testing if bootstrap password is valid for http://172.14.0.1:9200/_security/_authenticate?pretty
+
+```
+
+链接地址为我主机上安装的docker所在地址，很明显这个地址不正确。
+
+解决方式：
+
+在es下的config文件夹中添加以下内容：
+
+```yml
+
+#network.publish_host: ${你的主机ip地址}
+network.publish_host: 192.168.229.10
+
+```
+
+这样就能防止docker下的地址干扰我们的elasticSearch运行！
+
+参考地址：
+
+* https://elasticsearch.cn/question/8587
+
 ## 参考文档
 
 * log-pilot运行说明：https://github.com/AliyunContainerService/log-pilot/blob/master/docs/filebeat/docs.md
